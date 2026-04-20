@@ -16,6 +16,8 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="css/styles.css" />
+  <!-- Google AdSense -->
+  <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-1234567890123456" crossorigin="anonymous"></script>
 </head>
 <body>
 
@@ -25,7 +27,7 @@
       <span class="nav-logo">⚡</span>
       <span class="nav-title">PollSnap</span>
     </div>
-    <button class="btn btn-primary btn-sm" onclick="navigate('/')">+ New Poll</button>
+    <button id="nav-new-poll-btn" class="btn btn-primary btn-sm" onclick="navigate('/')">+ New Poll</button>
   </nav>
 
   <main id="app">
@@ -35,7 +37,7 @@
       <div class="hero">
         <div class="hero-badge">✨ Free Forever</div>
         <h1 class="hero-title">Create Polls<br><span class="gradient-text">That Matter</span></h1>
-        <p class="hero-subtitle">Share with anyone. Track results in real-time. Export with one click.</p>
+
       </div>
 
       <div class="card create-card">
@@ -94,30 +96,22 @@
             <span id="create-btn-loader" style="display:none">Creating...</span>
           </button>
           <div id="create-error" class="error-msg"></div>
+          <p style="font-size: 0.75rem; color: var(--text-3); text-align: center; margin-top: 1rem;">Note: Polls with no new votes in the last 30 days are automatically deleted.</p>
         </form>
       </div>
 
-      <div class="features-grid">
-        <div class="feature-card">
-          <div class="feature-icon">🔗</div>
-          <h3>Short URLs</h3>
-          <p>Compact links ready to share anywhere</p>
-        </div>
-        <div class="feature-card">
-          <div class="feature-icon">📊</div>
-          <h3>Live Results</h3>
-          <p>Watch votes come in real-time</p>
-        </div>
-        <div class="feature-card">
-          <div class="feature-icon">📱</div>
-          <h3>Works Everywhere</h3>
-          <p>Mobile, desktop, installable as an app</p>
-        </div>
-        <div class="feature-card">
-          <div class="feature-icon">⬇️</div>
-          <h3>Export Results</h3>
-          <p>CSV, clipboard, or PNG image</p>
-        </div>
+      <!-- Google Ads Space -->
+      <div class="ad-container" style="margin-top: 2rem; text-align: center; min-height: 250px; background: rgba(255,255,255,0.02); border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 0.8rem; color: var(--text-3);">
+        <!-- Ad Placeholder / Real Ad Script -->
+        <ins class="adsbygoogle"
+             style="display:block"
+             data-ad-client="ca-pub-1234567890123456"
+             data-ad-slot="1234567890"
+             data-ad-format="auto"
+             data-full-width-responsive="true"></ins>
+        <script>
+             (adsbygoogle = window.adsbygoogle || []).push({});
+        </script>
       </div>
     </div>
 
@@ -126,7 +120,7 @@
       <div class="success-hero">
         <div class="success-icon">🎉</div>
         <h1>Your Poll is Live!</h1>
-        <p>Save these links — you'll need them to manage your poll</p>
+        <p class="warning-text" style="color: #fbbf24; font-weight: 500;">Save these links! You won't be able to recover this later without these links.</p>
       </div>
 
       <div class="card links-card">

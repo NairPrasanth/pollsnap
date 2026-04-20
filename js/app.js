@@ -28,6 +28,11 @@ function showView(name) {
   document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
   const el = document.getElementById('view-' + name);
   if (el) el.classList.add('active');
+
+  const navBtn = document.getElementById('nav-new-poll-btn');
+  if (navBtn) {
+    navBtn.style.display = (name === 'participate') ? 'none' : 'block';
+  }
 }
 
 function teardown() {

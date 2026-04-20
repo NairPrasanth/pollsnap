@@ -175,7 +175,8 @@ async function submitVote() {
     await db.collection('polls').doc(pollId).update({
       [voteKey]:      firebase.firestore.FieldValue.increment(1),
       voterIds:       firebase.firestore.FieldValue.arrayUnion(voterId),
-      voterDetails:   firebase.firestore.FieldValue.arrayUnion(voterDetail)
+      voterDetails:   firebase.firestore.FieldValue.arrayUnion(voterDetail),
+      expiresAt:      new Date(Date.now() + 30 * 24 * 60 * 60 * 1000)
     });
 
     markVoted(pollId, selectedOptionIndex);

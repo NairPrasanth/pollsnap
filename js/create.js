@@ -141,7 +141,8 @@ async function handleCreatePoll(e) {
       voterIds:    [],
       isOpen:      true,
       adminToken,
-      createdAt:   firebase.firestore.FieldValue.serverTimestamp()
+      createdAt:   firebase.firestore.FieldValue.serverTimestamp(),
+      expiresAt:   new Date(Date.now() + 30 * 24 * 60 * 60 * 1000)
     };
 
     await db.collection('polls').doc(pollId).set(pollData);
