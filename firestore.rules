@@ -1,0 +1,30 @@
+# Firestore Security Rules
+# Copy-paste these into Firebase Console → Firestore → Rules
+
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    match /polls/{pollId} {
+
+      # Anyone can read a poll (needed for participants + admin)
+      allow read: if true;
+
+      # Create: anyone can create a poll (open service)
+      allow create: if
+        request.resource.data.keys().hasAll(['title','question','options','votes','isOpen','adminToken','createdAt'])
+        && request.resource.data.title is string
+        && request.resource.data.title.size() > 0
+        && request.resource.data.title.size() <= 100
+        && request.resource.data.options is list
+        && request.resource.data.options.size() >= 2
+        && request.resource.data.options.size() <= 10;
+
+      # Update: allow vote updates and admin updates
+      # (simple rule - app enforces adminToken check for admin ops)
+      allow update: if true;
+
+      # Delete: not allowed via client
+      allow delete: if false;
+    }
+  }
+}

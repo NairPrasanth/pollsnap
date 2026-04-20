@@ -1,0 +1,340 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>PollSnap — Create & Share Polls Instantly</title>
+  <meta name="description" content="Create polls, share with participants, and track results in real-time. Free, fast, and mobile-friendly." />
+  <meta name="theme-color" content="#7c3aed" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="PollSnap" />
+  <link rel="manifest" href="manifest.json" />
+  <link rel="apple-touch-icon" href="icons/icon-192.png" />
+  <link rel="icon" type="image/png" sizes="32x32" href="icons/icon-192.png" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="css/styles.css" />
+</head>
+<body>
+
+  <!-- NAVBAR -->
+  <nav class="navbar" id="navbar">
+    <div class="nav-brand" onclick="navigate('/')">
+      <span class="nav-logo">⚡</span>
+      <span class="nav-title">PollSnap</span>
+    </div>
+    <button class="btn btn-primary btn-sm" onclick="navigate('/')">+ New Poll</button>
+  </nav>
+
+  <main id="app">
+
+    <!-- ===== HOME / CREATE VIEW ===== -->
+    <div id="view-home" class="view active">
+      <div class="hero">
+        <div class="hero-badge">✨ Free Forever</div>
+        <h1 class="hero-title">Create Polls<br><span class="gradient-text">That Matter</span></h1>
+        <p class="hero-subtitle">Share with anyone. Track results in real-time. Export with one click.</p>
+      </div>
+
+      <div class="card create-card">
+        <h2 class="card-title">🗳️ Create a New Poll</h2>
+        <form id="create-form" class="form" onsubmit="handleCreatePoll(event)">
+
+          <div class="form-group">
+            <label class="form-label" for="poll-title">Poll Title <span class="required">*</span></label>
+            <input type="text" id="poll-title" class="form-input" placeholder="e.g. Team Lunch Options" maxlength="100" required autocomplete="off" />
+            <span class="char-count" id="title-count">0/100</span>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" for="poll-description">Description <span class="optional">Optional</span></label>
+            <textarea id="poll-description" class="form-input form-textarea" placeholder="Add context or instructions for participants..." maxlength="500"></textarea>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label" for="poll-date">Date <span class="optional">Optional</span></label>
+              <input type="date" id="poll-date" class="form-input" />
+            </div>
+            <div class="form-group">
+              <label class="form-label" for="poll-time">Time <span class="optional">Optional</span></label>
+              <input type="time" id="poll-time" class="form-input" />
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" for="poll-question">Poll Question <span class="required">*</span></label>
+            <input type="text" id="poll-question" class="form-input" placeholder="e.g. Where should we eat?" maxlength="200" required autocomplete="off" />
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">
+              Poll Options <span class="required">*</span>
+              <span class="optional">(min 2, max 10)</span>
+            </label>
+            <div id="options-container">
+              <div class="option-row" data-index="0">
+                <span class="option-number">1</span>
+                <input type="text" class="form-input option-input" placeholder="Option 1" maxlength="150" />
+                <button type="button" class="btn-icon btn-delete-option" onclick="removeOption(this)" title="Remove option" style="display:none">✕</button>
+              </div>
+              <div class="option-row" data-index="1">
+                <span class="option-number">2</span>
+                <input type="text" class="form-input option-input" placeholder="Option 2" maxlength="150" />
+                <button type="button" class="btn-icon btn-delete-option" onclick="removeOption(this)" title="Remove option" style="display:none">✕</button>
+              </div>
+            </div>
+            <button type="button" class="btn btn-ghost btn-sm" id="add-option-btn" onclick="addOption()">+ Add Option</button>
+          </div>
+
+          <button type="submit" class="btn btn-primary btn-lg btn-full" id="create-btn">
+            <span id="create-btn-text">🚀 Create Poll</span>
+            <span id="create-btn-loader" style="display:none">Creating...</span>
+          </button>
+          <div id="create-error" class="error-msg"></div>
+        </form>
+      </div>
+
+      <div class="features-grid">
+        <div class="feature-card">
+          <div class="feature-icon">🔗</div>
+          <h3>Short URLs</h3>
+          <p>Compact links ready to share anywhere</p>
+        </div>
+        <div class="feature-card">
+          <div class="feature-icon">📊</div>
+          <h3>Live Results</h3>
+          <p>Watch votes come in real-time</p>
+        </div>
+        <div class="feature-card">
+          <div class="feature-icon">📱</div>
+          <h3>Works Everywhere</h3>
+          <p>Mobile, desktop, installable as an app</p>
+        </div>
+        <div class="feature-card">
+          <div class="feature-icon">⬇️</div>
+          <h3>Export Results</h3>
+          <p>CSV, clipboard, or PNG image</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== SUCCESS VIEW ===== -->
+    <div id="view-success" class="view">
+      <div class="success-hero">
+        <div class="success-icon">🎉</div>
+        <h1>Your Poll is Live!</h1>
+        <p>Save these links — you'll need them to manage your poll</p>
+      </div>
+
+      <div class="card links-card">
+        <div class="link-section">
+          <div class="link-header">
+            <span class="link-badge admin-badge">🔒 Admin Link</span>
+            <span class="link-desc">Keep this private — only share with co-admins</span>
+          </div>
+          <div class="link-box" id="admin-link-box">
+            <span id="admin-url-display" class="link-text"></span>
+            <button class="btn-icon" id="copy-admin-btn" onclick="copyLink('admin-url-display', 'copy-admin-btn')" title="Copy Admin Link">
+              <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+            </button>
+          </div>
+        </div>
+        <div class="link-section">
+          <div class="link-header">
+            <span class="link-badge participant-badge">🗳️ Participant Link</span>
+            <span class="link-desc">Share this with voters</span>
+          </div>
+          <div class="link-box" id="participant-link-box">
+            <span id="participant-url-display" class="link-text"></span>
+            <button class="btn-icon" id="copy-part-btn" onclick="copyLink('participant-url-display', 'copy-part-btn')" title="Copy Participant Link">
+              <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <div class="action-row">
+        <button class="btn btn-primary" id="go-admin-btn" onclick="goToAdmin()">📊 Open Admin Dashboard</button>
+        <button class="btn btn-ghost" onclick="navigate('/')">+ Create Another</button>
+      </div>
+    </div>
+
+    <!-- ===== ADMIN VIEW ===== -->
+    <div id="view-admin" class="view">
+      <div class="view-header">
+        <div class="view-header-info">
+          <div class="view-breadcrumb">🔒 Admin Dashboard</div>
+          <h1 id="admin-poll-title" class="view-title">Loading...</h1>
+          <p id="admin-poll-description" class="view-subtitle"></p>
+          <div id="admin-poll-meta" class="poll-meta"></div>
+        </div>
+        <div class="poll-status-wrap">
+          <div id="poll-status-badge" class="status-badge open">🟢 Open</div>
+          <button id="toggle-poll-btn" class="btn btn-sm btn-ghost" onclick="togglePollStatus()">Close Poll</button>
+        </div>
+      </div>
+
+      <div class="stats-row">
+        <div class="stat-card">
+          <div class="stat-value" id="total-votes-stat">0</div>
+          <div class="stat-label">Total Votes</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-value" id="leading-option-stat">—</div>
+          <div class="stat-label">Leading Option</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-value" id="unique-voters-stat">0</div>
+          <div class="stat-label">Unique Voters</div>
+        </div>
+      </div>
+
+      <div class="card results-card" id="results-export-area">
+        <div class="results-card-header">
+          <h2 id="admin-question" class="question-title"></h2>
+          <div class="live-indicator">
+            <span class="live-dot"></span>
+            <span>Live</span>
+          </div>
+        </div>
+        <div id="admin-results-bars" class="results-bars"></div>
+      </div>
+
+      <div class="card share-card">
+        <h3 class="card-title">🔗 Share Links</h3>
+        <div class="link-section">
+          <div class="link-header">
+            <span class="link-badge admin-badge">🔒 Admin Link</span>
+          </div>
+          <div class="link-box">
+            <span id="admin-share-url" class="link-text"></span>
+            <button class="btn-icon" id="share-admin-copy-btn" onclick="copyLink('admin-share-url', 'share-admin-copy-btn')" title="Copy">
+              <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+            </button>
+          </div>
+        </div>
+        <div class="link-section">
+          <div class="link-header">
+            <span class="link-badge participant-badge">🗳️ Participant Link</span>
+          </div>
+          <div class="link-box">
+            <span id="participant-share-url" class="link-text"></span>
+            <button class="btn-icon" id="share-part-copy-btn" onclick="copyLink('participant-share-url', 'share-part-copy-btn')" title="Copy">
+              <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <div class="card export-card">
+        <h3 class="card-title">📥 Export Results</h3>
+        <div class="export-buttons">
+          <button class="btn btn-export" id="export-csv-btn" onclick="exportCSV()">
+            <span class="export-icon">📄</span>
+            <span>Download CSV</span>
+          </button>
+          <button class="btn btn-export" id="export-clip-btn" onclick="exportClipboard()">
+            <span class="export-icon">📋</span>
+            <span>Copy to Clipboard</span>
+          </button>
+          <button class="btn btn-export" id="export-png-btn" onclick="exportPNG()">
+            <span class="export-icon">🖼️</span>
+            <span>Save as Image</span>
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== PARTICIPATE VIEW ===== -->
+    <div id="view-participate" class="view">
+      <div class="view-header centered">
+        <h1 id="part-poll-title" class="view-title">Loading...</h1>
+        <p id="part-poll-description" class="view-subtitle"></p>
+        <div id="part-poll-meta" class="poll-meta"></div>
+      </div>
+
+      <!-- Voting Card -->
+      <div id="vote-card" class="card vote-card" style="display:none">
+        <h2 id="part-question" class="question-title"></h2>
+        <div id="vote-options" class="vote-options"></div>
+        <button id="vote-btn" class="btn btn-primary btn-lg btn-full" onclick="submitVote()">🗳️ Submit Vote</button>
+        <div id="vote-error" class="error-msg"></div>
+      </div>
+
+      <!-- Already Voted / Results -->
+      <div id="voted-card" class="card" style="display:none">
+        <div class="voted-header">
+          <div class="voted-icon">✅</div>
+          <h2>Thanks for voting!</h2>
+          <p>Here are the current results</p>
+        </div>
+        <h2 id="voted-question" class="question-title" style="margin-bottom:1rem"></h2>
+        <div id="part-results-bars" class="results-bars"></div>
+        <div class="vote-total-row">
+          <span id="part-total-votes">0 votes total</span>
+        </div>
+      </div>
+
+      <!-- Poll Closed -->
+      <div id="closed-card" class="card" style="display:none">
+        <div class="closed-content">
+          <div class="closed-icon">🔒</div>
+          <h2>Poll is Closed</h2>
+          <p style="color:var(--text-secondary)">This poll is no longer accepting new votes.</p>
+        </div>
+        <h2 id="closed-question" class="question-title" style="margin:1.5rem 0 1rem"></h2>
+        <div id="closed-results-bars" class="results-bars"></div>
+        <div class="vote-total-row">
+          <span id="closed-total-votes">0 votes total</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== NOT FOUND VIEW ===== -->
+    <div id="view-notfound" class="view">
+      <div class="notfound">
+        <div class="notfound-icon">🔍</div>
+        <h1>Poll Not Found</h1>
+        <p>This poll may have been deleted or the link is incorrect.</p>
+        <button class="btn btn-primary" onclick="navigate('/')">Create a New Poll</button>
+      </div>
+    </div>
+
+    <!-- ===== CONFIG MISSING VIEW ===== -->
+    <div id="view-config" class="view">
+      <div class="notfound">
+        <div class="notfound-icon">⚙️</div>
+        <h1>Firebase Not Configured</h1>
+        <p>Open <code>js/firebase-config.js</code> and add your Firebase credentials to get started.</p>
+        <a href="https://console.firebase.google.com" target="_blank" class="btn btn-primary" style="margin-top:1rem">Open Firebase Console →</a>
+      </div>
+    </div>
+
+  </main>
+
+  <!-- Toast -->
+  <div id="toast" class="toast" role="alert" aria-live="polite"></div>
+
+  <!-- Loading Overlay -->
+  <div id="loading-overlay" class="loading-overlay" style="display:none">
+    <div class="loading-spinner"></div>
+  </div>
+
+  <!-- Firebase SDK (compat) -->
+  <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
+
+  <!-- html2canvas for PNG export -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+
+  <!-- App -->
+  <script src="js/firebase-config.js"></script>
+  <script src="js/app.js"></script>
+  <script src="js/create.js"></script>
+  <script src="js/admin.js"></script>
+  <script src="js/participate.js"></script>
+</body>
+</html>

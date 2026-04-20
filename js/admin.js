@@ -1,0 +1,240 @@
+// ============================================================
+// PollSnap — Admin Dashboard
+// ============================================================
+
+let adminPollData = null;
+
+async function loadAdminView(pollId, adminToken) {
+  setLoading(true);
+
+  // Clear exports area headline
+  document.getElementById('admin-poll-title').textContent    = 'Loading…';
+  document.getElementById('admin-poll-description').textContent = '';
+  document.getElementById('admin-poll-meta').innerHTML        = '';
+  document.getElementById('admin-results-bars').innerHTML     = '';
+
+  try {
+    const ref = db.collection('polls').doc(pollId);
+
+    // Subscribe to real-time updates
+    window._unsubscribe = ref.onSnapshot(snap => {
+      if (!snap.exists) {
+        showView('notfound');
+        setLoading(false);
+        return;
+      }
+
+      const data = snap.data();
+
+      // Verify adminToken
+      if (data.adminToken !== adminToken) {
+        showView('notfound');
+        setLoading(false);
+        return;
+      }
+
+      adminPollData = { ...data, id: pollId };
+      renderAdminDashboard(data, pollId, adminToken);
+      setLoading(false);
+    }, err => {
+      console.error('Admin snapshot error:', err);
+      setLoading(false);
+      showView('notfound');
+    });
+
+  } catch (err) {
+    console.error('loadAdminView error:', err);
+    setLoading(false);
+    showView('notfound');
+  }
+}
+window.loadAdminView = loadAdminView;
+
+function renderAdminDashboard(data, pollId, adminToken) {
+  // Header
+  document.getElementById('admin-poll-title').textContent       = data.title;
+  document.getElementById('admin-poll-description').textContent = data.description || '';
+
+  // Meta (date/time)
+  const meta = [];
+  if (data.date) meta.push(`<span class="poll-meta-item">📅 ${formatDate(data.date)}</span>`);
+  if (data.time) meta.push(`<span class="poll-meta-item">🕐 ${formatTime(data.time)}</span>`);
+  document.getElementById('admin-poll-meta').innerHTML = meta.join('');
+
+  // Status
+  const isOpen   = data.isOpen !== false;
+  const badge    = document.getElementById('poll-status-badge');
+  const toggleBtn = document.getElementById('toggle-poll-btn');
+  badge.className = 'status-badge ' + (isOpen ? 'open' : 'closed');
+  badge.textContent = isOpen ? '🟢 Open' : '🔴 Closed';
+  toggleBtn.textContent = isOpen ? 'Close Poll' : 'Reopen Poll';
+
+  // Stats
+  const votes  = data.votes || {};
+  const total  = Object.values(votes).reduce((a, b) => a + b, 0);
+  const unique = (data.voterIds || []).length;
+
+  document.getElementById('total-votes-stat').textContent  = total;
+  document.getElementById('unique-voters-stat').textContent = unique;
+
+  // Leading option
+  let leadingIdx = -1, leadingMax = -1;
+  data.options.forEach((_, i) => {
+    if ((votes[i] || 0) > leadingMax) { leadingMax = votes[i] || 0; leadingIdx = i; }
+  });
+  const leadingEl = document.getElementById('leading-option-stat');
+  if (leadingIdx >= 0 && leadingMax > 0) {
+    const label = data.options[leadingIdx];
+    leadingEl.textContent = label.length > 10 ? label.slice(0, 10) + '…' : label;
+    leadingEl.title = label;
+  } else {
+    leadingEl.textContent = '—';
+  }
+
+  // Question
+  document.getElementById('admin-question').textContent = data.question;
+
+  // Result bars
+  buildResultBars('admin-results-bars', data.options, votes, true);
+
+  // Share links
+  const base = window.location.origin + window.location.pathname;
+  document.getElementById('admin-share-url').textContent       = `${base}#/a/${pollId}/${adminToken}`;
+  document.getElementById('participant-share-url').textContent = `${base}#/p/${pollId}`;
+}
+
+// ─── Toggle Poll Open/Closed ──────────────────────────────────
+async function togglePollStatus() {
+  if (!adminPollData) return;
+  const newStatus = !adminPollData.isOpen;
+  try {
+    await db.collection('polls').doc(adminPollData.id).update({ isOpen: newStatus });
+    showToast(newStatus ? 'Poll reopened ✅' : 'Poll closed 🔒', 'success');
+  } catch (e) {
+    showToast('Failed to update status', 'error');
+    console.error(e);
+  }
+}
+window.togglePollStatus = togglePollStatus;
+
+// ─── Export: CSV ─────────────────────────────────────────────
+function exportCSV() {
+  if (!adminPollData) return;
+  const d     = adminPollData;
+  const votes = d.votes || {};
+  const total = Object.values(votes).reduce((a, b) => a + b, 0);
+
+  const rows = [
+    ['PollSnap Results Export'],
+    ['Title',    d.title],
+    ['Question', d.question],
+    d.date ? ['Date', formatDate(d.date)] : null,
+    d.time ? ['Time', formatTime(d.time)] : null,
+    ['Total Votes', total],
+    ['Status', d.isOpen ? 'Open' : 'Closed'],
+    ['Exported At', new Date().toLocaleString()],
+    [],
+    ['Option', 'Votes', 'Percentage']
+  ].filter(Boolean);
+
+  d.options.forEach((opt, i) => {
+    const v   = votes[i] || 0;
+    const pct = total > 0 ? ((v / total) * 100).toFixed(1) + '%' : '0.0%';
+    rows.push([opt, v, pct]);
+  });
+
+  const csv  = rows.map(r => r.map(c => `"${String(c).replace(/"/g, '""')}"`).join(',')).join('\n');
+  const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+  const link = document.createElement('a');
+  link.href     = URL.createObjectURL(blob);
+  link.download = `pollsnap-${adminPollData.id}-results.csv`;
+  link.click();
+  showToast('CSV downloaded! 📄', 'success');
+}
+window.exportCSV = exportCSV;
+
+// ─── Export: Clipboard ───────────────────────────────────────
+async function exportClipboard() {
+  if (!adminPollData) return;
+  const d     = adminPollData;
+  const votes = d.votes || {};
+  const total = Object.values(votes).reduce((a, b) => a + b, 0);
+
+  let text = `📊 ${d.title}\n`;
+  if (d.description) text += `${d.description}\n`;
+  text += `\n❓ ${d.question}\n\n`;
+
+  d.options.forEach((opt, i) => {
+    const v   = votes[i] || 0;
+    const pct = total > 0 ? Math.round((v / total) * 100) : 0;
+    const bar = '█'.repeat(Math.round(pct / 5)) + '░'.repeat(20 - Math.round(pct / 5));
+    text += `${opt}\n${bar} ${v} votes (${pct}%)\n\n`;
+  });
+
+  text += `Total: ${total} vote${total !== 1 ? 's' : ''}\n`;
+  text += `Exported via PollSnap`;
+
+  try {
+    await navigator.clipboard.writeText(text);
+    showToast('Copied to clipboard! 📋', 'success');
+  } catch {
+    showToast('Clipboard not available', 'error');
+  }
+}
+window.exportClipboard = exportClipboard;
+
+// ─── Export: PNG ─────────────────────────────────────────────
+async function exportPNG() {
+  if (!adminPollData || typeof html2canvas === 'undefined') {
+    showToast('Image export not available', 'error');
+    return;
+  }
+
+  const btn = document.getElementById('export-png-btn');
+  const orig = btn.innerHTML;
+  btn.innerHTML = '<span class="export-icon">⏳</span><span>Generating…</span>';
+  btn.disabled = true;
+
+  try {
+    const el = document.getElementById('results-export-area');
+    const canvas = await html2canvas(el, {
+      backgroundColor: '#0f0f2a',
+      scale: 2,
+      logging: false,
+      useCORS: true
+    });
+
+    const link  = document.createElement('a');
+    link.download = `pollsnap-${adminPollData.id}-results.png`;
+    link.href     = canvas.toDataURL('image/png');
+    link.click();
+    showToast('Image saved! 🖼️', 'success');
+  } catch (e) {
+    showToast('Image export failed', 'error');
+    console.error(e);
+  } finally {
+    btn.innerHTML = orig;
+    btn.disabled  = false;
+  }
+}
+window.exportPNG = exportPNG;
+
+// ─── Helpers ─────────────────────────────────────────────────
+function formatDate(d) {
+  if (!d) return '';
+  try {
+    const [y, m, day] = d.split('-');
+    return new Date(y, m - 1, day).toLocaleDateString(undefined, { month:'short', day:'numeric', year:'numeric' });
+  } catch { return d; }
+}
+
+function formatTime(t) {
+  if (!t) return '';
+  try {
+    const [h, m] = t.split(':');
+    const date = new Date(); date.setHours(+h, +m);
+    return date.toLocaleTimeString(undefined, { hour:'numeric', minute:'2-digit' });
+  } catch { return t; }
+}
+window.formatDate = formatDate;
+window.formatTime = formatTime;
