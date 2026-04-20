@@ -229,6 +229,14 @@
         </div>
       </div>
 
+      <!-- Participants List -->
+      <div class="card participants-card">
+        <h3 class="card-title">👥 Participants</h3>
+        <div id="participants-list" class="participants-list">
+          <p class="no-voters">No votes yet</p>
+        </div>
+      </div>
+
       <div class="card export-card">
         <h3 class="card-title">📥 Export Results</h3>
         <div class="export-buttons">
@@ -258,6 +266,11 @@
 
       <!-- Voting Card -->
       <div id="vote-card" class="card vote-card" style="display:none">
+        <!-- Mandatory Name Field -->
+        <div class="form-group voter-name-group">
+          <label class="form-label" for="voter-name">Your Name <span class="required">*</span></label>
+          <input type="text" id="voter-name" class="form-input" placeholder="Enter your full name" maxlength="100" autocomplete="name" />
+        </div>
         <h2 id="part-question" class="question-title"></h2>
         <div id="vote-options" class="vote-options"></div>
         <button id="vote-btn" class="btn btn-primary btn-lg btn-full" onclick="submitVote()">🗳️ Submit Vote</button>

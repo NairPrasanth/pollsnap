@@ -13,6 +13,8 @@ async function loadParticipantView(pollId) {
   document.getElementById('vote-card').style.display    = 'none';
   document.getElementById('voted-card').style.display   = 'none';
   document.getElementById('closed-card').style.display  = 'none';
+  const nameInput = document.getElementById('voter-name');
+  if (nameInput) nameInput.value = '';
   hideError('vote-error');
 
   document.getElementById('part-poll-title').textContent       = 'Loading…';
@@ -64,7 +66,7 @@ function renderParticipantView(data, pollId) {
   const total    = Object.values(votes).reduce((a, b) => a + b, 0);
 
   if (!isOpen) {
-    // Poll is closed → show results
+    // Poll is closed — show results
     document.getElementById('vote-card').style.display   = 'none';
     document.getElementById('voted-card').style.display  = 'none';
     document.getElementById('closed-card').style.display = 'block';
@@ -76,10 +78,15 @@ function renderParticipantView(data, pollId) {
   }
 
   if (voted) {
-    // Already voted → show live results
+    // Already voted — show live results
     document.getElementById('vote-card').style.display   = 'none';
     document.getElementById('closed-card').style.display = 'none';
     document.getElementById('voted-card').style.display  = 'block';
+
+    // Personalise the thank-you message with stored name
+    const storedName = localStorage.getItem('pollsnap_name_' + pollId);
+    const h2 = document.querySelector('#voted-card h2');
+    if (h2) h2.textContent = storedName ? `Thanks, ${storedName}!` : 'Thanks for voting!';
 
     document.getElementById('voted-question').textContent   = data.question;
     document.getElementById('part-total-votes').textContent = `${total} vote${total !== 1 ? 's' : ''} total`;
@@ -122,6 +129,16 @@ window.selectOption = selectOption;
 async function submitVote() {
   if (!participantPollData) return;
 
+  // Validate name
+  const nameInput = document.getElementById('voter-name');
+  const voterName = nameInput ? nameInput.value.trim() : '';
+  if (!voterName) {
+    showError('vote-error', 'Please enter your name before submitting.');
+    if (nameInput) nameInput.focus();
+    return;
+  }
+
+  // Validate option selection
   if (selectedOptionIndex === null) {
     showError('vote-error', 'Please select an option before submitting.');
     return;
@@ -133,26 +150,38 @@ async function submitVote() {
   // Double-check if already voted (in Firestore)
   if (participantPollData.voterIds && participantPollData.voterIds.includes(voterId)) {
     markVoted(pollId, selectedOptionIndex);
+    localStorage.setItem('pollsnap_name_' + pollId, voterName);
     renderParticipantView(participantPollData, pollId);
     return;
   }
 
   const btn  = document.getElementById('vote-btn');
-  btn.disabled  = true;
+  btn.disabled    = true;
   btn.textContent = '⏳ Submitting…';
   hideError('vote-error');
 
   try {
     const voteKey = `votes.${selectedOptionIndex}`;
 
+    // Build voter detail object
+    const voterDetail = {
+      id:          voterId,
+      name:        voterName,
+      optionIndex: selectedOptionIndex,
+      option:      participantPollData.options[selectedOptionIndex] || '',
+      votedAt:     firebase.firestore.Timestamp.now()
+    };
+
     await db.collection('polls').doc(pollId).update({
-      [voteKey]: firebase.firestore.FieldValue.increment(1),
-      voterIds:  firebase.firestore.FieldValue.arrayUnion(voterId)
+      [voteKey]:      firebase.firestore.FieldValue.increment(1),
+      voterIds:       firebase.firestore.FieldValue.arrayUnion(voterId),
+      voterDetails:   firebase.firestore.FieldValue.arrayUnion(voterDetail)
     });
 
     markVoted(pollId, selectedOptionIndex);
+    localStorage.setItem('pollsnap_name_' + pollId, voterName);
     showToast('Vote submitted! ✅', 'success');
-    // Snapshot will fire and update UI automatically
+    // Snapshot fires automatically and updates UI
 
   } catch (err) {
     console.error('Vote submit error:', err);

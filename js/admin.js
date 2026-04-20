@@ -7,16 +7,15 @@ let adminPollData = null;
 async function loadAdminView(pollId, adminToken) {
   setLoading(true);
 
-  // Clear exports area headline
   document.getElementById('admin-poll-title').textContent    = 'Loading…';
   document.getElementById('admin-poll-description').textContent = '';
   document.getElementById('admin-poll-meta').innerHTML        = '';
   document.getElementById('admin-results-bars').innerHTML     = '';
+  document.getElementById('participants-list').innerHTML      = '<p class="no-voters">Loading…</p>';
 
   try {
     const ref = db.collection('polls').doc(pollId);
 
-    // Subscribe to real-time updates
     window._unsubscribe = ref.onSnapshot(snap => {
       if (!snap.exists) {
         showView('notfound');
@@ -26,7 +25,6 @@ async function loadAdminView(pollId, adminToken) {
 
       const data = snap.data();
 
-      // Verify adminToken
       if (data.adminToken !== adminToken) {
         showView('notfound');
         setLoading(false);
@@ -55,27 +53,26 @@ function renderAdminDashboard(data, pollId, adminToken) {
   document.getElementById('admin-poll-title').textContent       = data.title;
   document.getElementById('admin-poll-description').textContent = data.description || '';
 
-  // Meta (date/time)
   const meta = [];
   if (data.date) meta.push(`<span class="poll-meta-item">📅 ${formatDate(data.date)}</span>`);
   if (data.time) meta.push(`<span class="poll-meta-item">🕐 ${formatTime(data.time)}</span>`);
   document.getElementById('admin-poll-meta').innerHTML = meta.join('');
 
   // Status
-  const isOpen   = data.isOpen !== false;
-  const badge    = document.getElementById('poll-status-badge');
+  const isOpen    = data.isOpen !== false;
+  const badge     = document.getElementById('poll-status-badge');
   const toggleBtn = document.getElementById('toggle-poll-btn');
-  badge.className = 'status-badge ' + (isOpen ? 'open' : 'closed');
+  badge.className   = 'status-badge ' + (isOpen ? 'open' : 'closed');
   badge.textContent = isOpen ? '🟢 Open' : '🔴 Closed';
   toggleBtn.textContent = isOpen ? 'Close Poll' : 'Reopen Poll';
 
   // Stats
   const votes  = data.votes || {};
   const total  = Object.values(votes).reduce((a, b) => a + b, 0);
-  const unique = (data.voterIds || []).length;
+  const voters = data.voterDetails || [];
 
-  document.getElementById('total-votes-stat').textContent  = total;
-  document.getElementById('unique-voters-stat').textContent = unique;
+  document.getElementById('total-votes-stat').textContent   = total;
+  document.getElementById('unique-voters-stat').textContent = voters.length || (data.voterIds || []).length;
 
   // Leading option
   let leadingIdx = -1, leadingMax = -1;
@@ -91,16 +88,50 @@ function renderAdminDashboard(data, pollId, adminToken) {
     leadingEl.textContent = '—';
   }
 
-  // Question
+  // Question & result bars
   document.getElementById('admin-question').textContent = data.question;
-
-  // Result bars
   buildResultBars('admin-results-bars', data.options, votes, true);
+
+  // Participants list
+  renderParticipantsList(voters, data.options);
 
   // Share links
   const base = window.location.origin + window.location.pathname;
   document.getElementById('admin-share-url').textContent       = `${base}#/a/${pollId}/${adminToken}`;
   document.getElementById('participant-share-url').textContent = `${base}#/p/${pollId}`;
+}
+
+// ─── Participants List ────────────────────────────────────────
+function renderParticipantsList(voters, options) {
+  const container = document.getElementById('participants-list');
+  if (!voters || voters.length === 0) {
+    container.innerHTML = '<p class="no-voters">No votes yet — share the participant link!</p>';
+    return;
+  }
+
+  // Sort by votedAt descending (most recent first)
+  const sorted = [...voters].sort((a, b) => {
+    const ta = a.votedAt ? (a.votedAt.seconds || 0) : 0;
+    const tb = b.votedAt ? (b.votedAt.seconds || 0) : 0;
+    return tb - ta;
+  });
+
+  container.innerHTML = sorted.map((v, idx) => {
+    const optLabel = options[v.optionIndex] !== undefined ? options[v.optionIndex] : (v.option || '—');
+    const timeStr  = v.votedAt
+      ? new Date(v.votedAt.seconds * 1000).toLocaleTimeString(undefined, { hour: 'numeric', minute: '2-digit' })
+      : '';
+    return `
+      <div class="participant-row">
+        <div class="participant-avatar">${escapeHtml(v.name.trim()[0].toUpperCase())}</div>
+        <div class="participant-info">
+          <span class="participant-name">${escapeHtml(v.name)}</span>
+          <span class="participant-choice">voted for <strong>${escapeHtml(optLabel)}</strong></span>
+        </div>
+        ${timeStr ? `<span class="participant-time">${timeStr}</span>` : ''}
+      </div>
+    `;
+  }).join('');
 }
 
 // ─── Toggle Poll Open/Closed ──────────────────────────────────
@@ -117,12 +148,13 @@ async function togglePollStatus() {
 }
 window.togglePollStatus = togglePollStatus;
 
-// ─── Export: CSV ─────────────────────────────────────────────
+// ─── Export: CSV (includes participant names) ─────────────────
 function exportCSV() {
   if (!adminPollData) return;
-  const d     = adminPollData;
-  const votes = d.votes || {};
-  const total = Object.values(votes).reduce((a, b) => a + b, 0);
+  const d      = adminPollData;
+  const votes  = d.votes || {};
+  const voters = d.voterDetails || [];
+  const total  = Object.values(votes).reduce((a, b) => a + b, 0);
 
   const rows = [
     ['PollSnap Results Export'],
@@ -134,6 +166,7 @@ function exportCSV() {
     ['Status', d.isOpen ? 'Open' : 'Closed'],
     ['Exported At', new Date().toLocaleString()],
     [],
+    ['--- Vote Totals ---'],
     ['Option', 'Votes', 'Percentage']
   ].filter(Boolean);
 
@@ -142,6 +175,24 @@ function exportCSV() {
     const pct = total > 0 ? ((v / total) * 100).toFixed(1) + '%' : '0.0%';
     rows.push([opt, v, pct]);
   });
+
+  if (voters.length > 0) {
+    rows.push([]);
+    rows.push(['--- Participant Details ---']);
+    rows.push(['Name', 'Vote', 'Time']);
+    const sorted = [...voters].sort((a, b) => {
+      const ta = a.votedAt ? (a.votedAt.seconds || 0) : 0;
+      const tb = b.votedAt ? (b.votedAt.seconds || 0) : 0;
+      return ta - tb;
+    });
+    sorted.forEach(v => {
+      const optLabel = d.options[v.optionIndex] || v.option || '—';
+      const timeStr  = v.votedAt
+        ? new Date(v.votedAt.seconds * 1000).toLocaleString()
+        : '';
+      rows.push([v.name, optLabel, timeStr]);
+    });
+  }
 
   const csv  = rows.map(r => r.map(c => `"${String(c).replace(/"/g, '""')}"`).join(',')).join('\n');
   const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
@@ -153,12 +204,13 @@ function exportCSV() {
 }
 window.exportCSV = exportCSV;
 
-// ─── Export: Clipboard ───────────────────────────────────────
+// ─── Export: Clipboard (includes names) ──────────────────────
 async function exportClipboard() {
   if (!adminPollData) return;
-  const d     = adminPollData;
-  const votes = d.votes || {};
-  const total = Object.values(votes).reduce((a, b) => a + b, 0);
+  const d      = adminPollData;
+  const votes  = d.votes || {};
+  const voters = d.voterDetails || [];
+  const total  = Object.values(votes).reduce((a, b) => a + b, 0);
 
   let text = `📊 ${d.title}\n`;
   if (d.description) text += `${d.description}\n`;
@@ -172,7 +224,19 @@ async function exportClipboard() {
   });
 
   text += `Total: ${total} vote${total !== 1 ? 's' : ''}\n`;
-  text += `Exported via PollSnap`;
+
+  if (voters.length > 0) {
+    text += `\n👥 Participants (${voters.length}):\n`;
+    const sorted = [...voters].sort((a, b) => {
+      return (a.votedAt ? a.votedAt.seconds : 0) - (b.votedAt ? b.votedAt.seconds : 0);
+    });
+    sorted.forEach(v => {
+      const optLabel = d.options[v.optionIndex] || v.option || '—';
+      text += `  • ${v.name} → ${optLabel}\n`;
+    });
+  }
+
+  text += `\nExported via PollSnap`;
 
   try {
     await navigator.clipboard.writeText(text);
@@ -190,10 +254,10 @@ async function exportPNG() {
     return;
   }
 
-  const btn = document.getElementById('export-png-btn');
+  const btn  = document.getElementById('export-png-btn');
   const orig = btn.innerHTML;
   btn.innerHTML = '<span class="export-icon">⏳</span><span>Generating…</span>';
-  btn.disabled = true;
+  btn.disabled  = true;
 
   try {
     const el = document.getElementById('results-export-area');

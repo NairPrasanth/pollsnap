@@ -507,7 +507,46 @@ input[type="time"]::-webkit-calendar-picker-indicator { filter: invert(.7); curs
 .share-card .link-section { margin-bottom: 1rem; }
 .share-card .link-section:last-child { margin-bottom: 0; }
 
+/* === VOTER NAME FIELD === */
+.voter-name-group {
+  margin-bottom: 1.25rem;
+  padding-bottom: 1.25rem;
+  border-bottom: 1px solid var(--glass-border);
+}
+
+/* === PARTICIPANTS LIST === */
+.participants-card { }
+.no-voters { font-size: .85rem; color: var(--text-3); text-align: center; padding: .5rem 0; }
+
+.participants-list { display: flex; flex-direction: column; gap: .6rem; }
+
+.participant-row {
+  display: flex; align-items: center; gap: .85rem;
+  padding: .75rem 1rem;
+  background: rgba(255,255,255,.03);
+  border: 1px solid var(--glass-border);
+  border-radius: var(--r-md);
+  animation: slideIn .25s ease;
+}
+
+.participant-avatar {
+  width: 36px; height: 36px; flex-shrink: 0;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #7c3aed, #ec4899);
+  display: flex; align-items: center; justify-content: center;
+  font-size: .85rem; font-weight: 800; color: #fff;
+}
+
+.participant-info {
+  flex: 1; display: flex; flex-direction: column; gap: .1rem; min-width: 0;
+}
+.participant-name  { font-size: .9rem; font-weight: 700; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.participant-choice { font-size: .78rem; color: var(--text-2); }
+.participant-choice strong { color: var(--primary-lt); }
+.participant-time  { font-size: .72rem; color: var(--text-3); flex-shrink: 0; }
+
 /* === RESPONSIVE === */
+
 @media (max-width: 480px) {
   .stats-row { grid-template-columns: repeat(3,1fr); gap: .6rem; }
   .stat-card  { padding: .9rem .6rem; }
