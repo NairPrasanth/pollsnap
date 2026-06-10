@@ -604,3 +604,92 @@ input[type="time"]::-webkit-calendar-picker-indicator { filter: invert(.7); curs
 @media (max-width: 360px) {
   .features-grid { grid-template-columns: 1fr; }
 }
+
+/* === HIDE RESULTS TOGGLE (Create Form) === */
+.toggle-group {
+  background: rgba(124,58,237,.06);
+  border: 1px solid rgba(124,58,237,.2);
+  border-radius: var(--r-md);
+  padding: 1rem 1.1rem;
+}
+
+.toggle-row {
+  display: flex; align-items: center; justify-content: space-between; gap: 1rem;
+}
+
+.toggle-label-wrap {
+  display: flex; flex-direction: column; gap: .25rem; flex: 1;
+}
+
+.toggle-title {
+  font-size: .9rem; font-weight: 700; color: var(--text);
+}
+
+.toggle-desc {
+  font-size: .75rem; color: var(--text-3); line-height: 1.4;
+}
+
+/* iOS-style toggle switch */
+.toggle-switch {
+  position: relative; display: inline-flex; align-items: center;
+  cursor: pointer; flex-shrink: 0;
+}
+.toggle-switch input { display: none; }
+
+.toggle-track {
+  width: 48px; height: 28px; border-radius: 100px;
+  background: rgba(255,255,255,.12);
+  border: 1px solid rgba(255,255,255,.15);
+  transition: background .25s ease, border-color .25s ease;
+  position: relative; display: block;
+}
+.toggle-thumb {
+  position: absolute; top: 3px; left: 3px;
+  width: 20px; height: 20px; border-radius: 50%;
+  background: #fff;
+  box-shadow: 0 1px 4px rgba(0,0,0,.4);
+  transition: transform .25s ease;
+}
+.toggle-switch input:checked ~ .toggle-track {
+  background: var(--primary);
+  border-color: var(--primary-lt);
+}
+.toggle-switch input:checked ~ .toggle-track .toggle-thumb {
+  transform: translateX(20px);
+}
+
+/* Admin: Hide Results button active state */
+.btn.active-hide {
+  background: rgba(124,58,237,.18);
+  border-color: rgba(124,58,237,.5);
+  color: #a78bfa;
+}
+
+/* === THANK-YOU CARD (Hidden Results) === */
+.thankyou-card {
+  text-align: center;
+  padding: 2.5rem 1.75rem;
+  display: flex; flex-direction: column; align-items: center; gap: 1rem;
+}
+
+.thankyou-icon {
+  font-size: 3.5rem;
+  animation: bounceIn .7s cubic-bezier(.36,.07,.19,.97);
+}
+
+.thankyou-title {
+  font-size: 1.6rem; font-weight: 800;
+}
+
+.thankyou-sub {
+  color: var(--text-2); font-size: .9rem; max-width: 300px;
+}
+
+.thankyou-choice {
+  background: rgba(124,58,237,.1);
+  border: 1px solid rgba(124,58,237,.25);
+  border-radius: var(--r-md);
+  padding: .6rem 1.25rem;
+  font-size: .9rem; color: var(--text-2);
+}
+.thankyou-choice strong { color: #a78bfa; }

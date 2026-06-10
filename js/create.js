@@ -96,6 +96,7 @@ async function handleCreatePoll(e) {
   const date        = document.getElementById('poll-date').value;
   const time        = document.getElementById('poll-time').value;
   const question    = document.getElementById('poll-question').value.trim();
+  const hideResults = document.getElementById('hide-results-toggle')?.checked || false;
 
   // Collect options
   const optionInputs = document.querySelectorAll('.option-input');
@@ -140,6 +141,7 @@ async function handleCreatePoll(e) {
       votes,
       voterIds:    [],
       isOpen:      true,
+      hideResults,
       adminToken,
       createdAt:   firebase.firestore.FieldValue.serverTimestamp(),
       expiresAt:   new Date(Date.now() + 30 * 24 * 60 * 60 * 1000)

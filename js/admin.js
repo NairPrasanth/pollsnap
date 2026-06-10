@@ -60,11 +60,17 @@ function renderAdminDashboard(data, pollId, adminToken) {
 
   // Status
   const isOpen    = data.isOpen !== false;
+  const hideResults = data.hideResults === true;
   const badge     = document.getElementById('poll-status-badge');
   const toggleBtn = document.getElementById('toggle-poll-btn');
+  const hideBtn   = document.getElementById('toggle-hide-btn');
   badge.className   = 'status-badge ' + (isOpen ? 'open' : 'closed');
   badge.textContent = isOpen ? '🟢 Open' : '🔴 Closed';
   toggleBtn.textContent = isOpen ? 'Close Poll' : 'Reopen Poll';
+  if (hideBtn) {
+    hideBtn.textContent = hideResults ? '👁️ Show Results' : '🔒 Hide Results';
+    hideBtn.classList.toggle('active-hide', hideResults);
+  }
 
   // Stats
   const votes  = data.votes || {};
@@ -171,6 +177,20 @@ async function togglePollStatus() {
   }
 }
 window.togglePollStatus = togglePollStatus;
+
+// ─── Toggle Hide Results ──────────────────────────────────────
+async function toggleHideResults() {
+  if (!adminPollData) return;
+  const newHide = !adminPollData.hideResults;
+  try {
+    await db.collection('polls').doc(adminPollData.id).update({ hideResults: newHide });
+    showToast(newHide ? 'Results hidden from participants 🔒' : 'Results now visible to participants 👁️', 'success');
+  } catch (e) {
+    showToast('Failed to update setting', 'error');
+    console.error(e);
+  }
+}
+window.toggleHideResults = toggleHideResults;
 
 // ─── Export: CSV (includes participant names) ─────────────────
 function exportCSV() {
