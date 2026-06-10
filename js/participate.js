@@ -182,7 +182,11 @@ async function submitVote() {
     markVoted(pollId, selectedOptionIndex);
     localStorage.setItem('pollsnap_name_' + pollId, voterName);
     showToast('Vote submitted! ✅', 'success');
-    // Snapshot fires automatically and updates UI
+
+    // Immediately update local data & switch to voted view — don't wait for snapshot
+    participantPollData.votes = participantPollData.votes || {};
+    participantPollData.votes[selectedOptionIndex] = (participantPollData.votes[selectedOptionIndex] || 0) + 1;
+    renderParticipantView(participantPollData, pollId);
 
   } catch (err) {
     console.error('Vote submit error:', err);

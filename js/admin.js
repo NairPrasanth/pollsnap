@@ -101,7 +101,7 @@ function renderAdminDashboard(data, pollId, adminToken) {
   document.getElementById('participant-share-url').textContent = `${base}#/p/${pollId}`;
 }
 
-// ─── Participants List ────────────────────────────────────────
+// ─── Participants List (grouped by option) ────────────────────
 function renderParticipantsList(voters, options) {
   const container = document.getElementById('participants-list');
   if (!voters || voters.length === 0) {
@@ -109,29 +109,53 @@ function renderParticipantsList(voters, options) {
     return;
   }
 
-  // Sort by votedAt descending (most recent first)
-  const sorted = [...voters].sort((a, b) => {
-    const ta = a.votedAt ? (a.votedAt.seconds || 0) : 0;
-    const tb = b.votedAt ? (b.votedAt.seconds || 0) : 0;
-    return tb - ta;
+  // Group voters by optionIndex
+  const groups = {}; // { optionIndex: [voterDetail, ...] }
+  options.forEach((_, i) => { groups[i] = []; });
+  voters.forEach(v => {
+    const idx = v.optionIndex !== undefined ? v.optionIndex : -1;
+    if (groups[idx] === undefined) groups[idx] = [];
+    groups[idx].push(v);
   });
 
-  container.innerHTML = sorted.map((v, idx) => {
-    const optLabel = options[v.optionIndex] !== undefined ? options[v.optionIndex] : (v.option || '—');
-    const timeStr  = v.votedAt
-      ? new Date(v.votedAt.seconds * 1000).toLocaleTimeString(undefined, { hour: 'numeric', minute: '2-digit' })
-      : '';
-    return `
-      <div class="participant-row">
-        <div class="participant-avatar">${escapeHtml(v.name.trim()[0].toUpperCase())}</div>
-        <div class="participant-info">
-          <span class="participant-name">${escapeHtml(v.name)}</span>
-          <span class="participant-choice">voted for <strong>${escapeHtml(optLabel)}</strong></span>
-        </div>
-        ${timeStr ? `<span class="participant-time">${timeStr}</span>` : ''}
-      </div>
-    `;
-  }).join('');
+  // Sort voters within each group by votedAt ascending
+  Object.keys(groups).forEach(k => {
+    groups[k].sort((a, b) => (a.votedAt ? a.votedAt.seconds : 0) - (b.votedAt ? b.votedAt.seconds : 0));
+  });
+
+  let html = '';
+  options.forEach((opt, i) => {
+    const group = groups[i] || [];
+    const count = group.length;
+    html += `
+      <div class="participant-group">
+        <div class="participant-group-header">
+          <span class="participant-group-label">${escapeHtml(opt)}</span>
+          <span class="participant-group-count">${count} vote${count !== 1 ? 's' : ''}</span>
+        </div>`;
+
+    if (count === 0) {
+      html += `<p class="no-voters-group">No votes yet</p>`;
+    } else {
+      group.forEach(v => {
+        const timeStr = v.votedAt
+          ? new Date(v.votedAt.seconds * 1000).toLocaleTimeString(undefined, { hour: 'numeric', minute: '2-digit' })
+          : '';
+        html += `
+          <div class="participant-row">
+            <div class="participant-avatar">${escapeHtml(v.name.trim()[0].toUpperCase())}</div>
+            <div class="participant-info">
+              <span class="participant-name">${escapeHtml(v.name)}</span>
+            </div>
+            ${timeStr ? `<span class="participant-time">${timeStr}</span>` : ''}
+          </div>`;
+      });
+    }
+
+    html += `</div>`;
+  });
+
+  container.innerHTML = html;
 }
 
 // ─── Toggle Poll Open/Closed ──────────────────────────────────
