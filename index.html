@@ -34,11 +34,23 @@
 
     <!-- ===== HOME / CREATE VIEW ===== -->
     <div id="view-home" class="view active">
-      <div class="hero">
-        <div class="hero-badge">✨ Free Forever</div>
-        <h1 class="hero-title">Create Polls<br><span class="gradient-text">That Matter</span></h1>
 
+      <!-- Feature Tabs -->
+      <div class="feature-tabs">
+        <button class="feature-tab active" id="ftab-poll" onclick="switchHomeTab('poll')">
+          <span>🗳️</span><span>Polls</span>
+        </button>
+        <button class="feature-tab" id="ftab-raffle" onclick="switchHomeTab('raffle')">
+          <span>🎟️</span><span>Raffles</span>
+        </button>
       </div>
+
+      <!-- ── POLL PANE ── -->
+      <div id="pane-poll" class="feature-pane active">
+        <div class="hero">
+          <div class="hero-badge">✨ Free Forever</div>
+          <h1 class="hero-title">Create Polls<br><span class="gradient-text">That Matter</span></h1>
+        </div>
 
       <div class="card create-card">
         <h2 class="card-title">🗳️ Create a New Poll</h2>
@@ -114,20 +126,74 @@
         </form>
       </div>
 
-      <!-- Google Ads Space -->
-      <div class="ad-container" style="margin-top: 2rem; text-align: center; min-height: 250px; background: rgba(255,255,255,0.02); border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 0.8rem; color: var(--text-3);">
-        <!-- Ad Placeholder / Real Ad Script -->
-        <ins class="adsbygoogle"
-             style="display:block"
-             data-ad-client="ca-pub-1234567890123456"
-             data-ad-slot="1234567890"
-             data-ad-format="auto"
-             data-full-width-responsive="true"></ins>
-        <script>
-             (adsbygoogle = window.adsbygoogle || []).push({});
-        </script>
-      </div>
-    </div>
+      </div><!-- end pane-poll -->
+
+      <!-- ── RAFFLE PANE ── -->
+      <div id="pane-raffle" class="feature-pane">
+        <div class="hero">
+          <div class="hero-badge raffle-badge">🎟️ Free Raffle Manager</div>
+          <h1 class="hero-title">Run Raffles<br><span class="gradient-text-teal">Effortlessly</span></h1>
+        </div>
+
+        <div class="card create-card">
+          <h2 class="card-title">🎟️ Create a New Raffle</h2>
+          <form id="raffle-create-form" class="form" onsubmit="handleCreateRaffle(event)">
+
+            <div class="form-group">
+              <label class="form-label" for="raffle-title">Raffle Name <span class="required">*</span></label>
+              <input type="text" id="raffle-title" class="form-input" placeholder="e.g. Summer Charity Raffle 2025" maxlength="100" required />
+            </div>
+
+            <div class="form-group">
+              <label class="form-label" for="raffle-desc">Description <span class="optional">Optional</span></label>
+              <textarea id="raffle-desc" class="form-input form-textarea" placeholder="Event details, rules, etc." maxlength="500"></textarea>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label" for="raffle-prize">Prize Description <span class="required">*</span></label>
+              <input type="text" id="raffle-prize" class="form-input" placeholder="e.g. iPhone 16 Pro + $500 Cash" maxlength="200" required />
+            </div>
+
+            <div class="form-row">
+              <div class="form-group">
+                <label class="form-label" for="raffle-draw-date">Draw Date <span class="optional">Optional</span></label>
+                <input type="date" id="raffle-draw-date" class="form-input" />
+              </div>
+              <div class="form-group">
+                <label class="form-label" for="raffle-max-tickets">Max Tickets <span class="optional">Optional</span></label>
+                <input type="number" id="raffle-max-tickets" class="form-input" placeholder="Leave blank for unlimited" min="1" />
+              </div>
+            </div>
+
+            <!-- Ticket Templates -->
+            <div class="form-group">
+              <label class="form-label">Ticket Template <span class="required">*</span></label>
+              <div class="tpl-grid">
+                <div class="tpl-card selected" id="tpl-modern" onclick="selectRaffleTemplate('modern')">
+                  <div class="tpl-preview tpl-modern-prev"><span class="tpl-num">#0042</span></div>
+                  <span class="tpl-name">Modern</span>
+                </div>
+                <div class="tpl-card" id="tpl-classic" onclick="selectRaffleTemplate('classic')">
+                  <div class="tpl-preview tpl-classic-prev"><span class="tpl-num">#0042</span></div>
+                  <span class="tpl-name">Classic</span>
+                </div>
+                <div class="tpl-card" id="tpl-festive" onclick="selectRaffleTemplate('festive')">
+                  <div class="tpl-preview tpl-festive-prev"><span class="tpl-num">#0042</span></div>
+                  <span class="tpl-name">Festive</span>
+                </div>
+              </div>
+            </div>
+
+            <button type="submit" class="btn btn-raffle btn-lg btn-full" id="raffle-create-btn">
+              <span id="raffle-create-btn-text">🎟️ Create Raffle</span>
+              <span id="raffle-create-btn-loader" style="display:none">Creating…</span>
+            </button>
+            <div id="raffle-create-error" class="error-msg"></div>
+          </form>
+        </div>
+      </div><!-- end pane-raffle -->
+
+    </div><!-- end view-home -->
 
     <!-- ===== SUCCESS VIEW ===== -->
     <div id="view-success" class="view">
@@ -327,13 +393,193 @@
       </div>
     </div>
 
+    <!-- ===== RAFFLE SUCCESS VIEW ===== -->
+    <div id="view-raffle-success" class="view">
+      <div class="success-hero">
+        <div class="success-icon">🎟️</div>
+        <h1>Your Raffle is Live!</h1>
+        <p id="rs-raffle-name" style="color:var(--text-2);margin-top:.5rem"></p>
+        <p class="warning-text" style="color:#fbbf24;font-weight:500;margin-top:.5rem">Save these links! You won't be able to recover them without these links.</p>
+      </div>
+      <div class="card links-card">
+        <div class="link-section">
+          <div class="link-header"><span class="link-badge admin-badge">🔒 Admin Link</span><span class="link-desc">Manage the raffle — keep private</span></div>
+          <div class="link-box"><span id="rs-admin-url" class="link-text"></span>
+            <button class="btn-icon" id="rs-copy-admin" onclick="copyLink('rs-admin-url','rs-copy-admin')" title="Copy"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg></button>
+          </div>
+        </div>
+        <div class="link-section">
+          <div class="link-header"><span class="link-badge participant-badge">🎟️ Ticket Link</span><span class="link-desc">Share with distributors to issue tickets</span></div>
+          <div class="link-box"><span id="rs-ticket-url" class="link-text"></span>
+            <button class="btn-icon" id="rs-copy-ticket" onclick="copyLink('rs-ticket-url','rs-copy-ticket')" title="Copy"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg></button>
+          </div>
+        </div>
+      </div>
+      <div class="action-row">
+        <button class="btn btn-raffle" id="rs-go-admin-btn">📊 Open Admin Dashboard</button>
+        <button class="btn btn-ghost" onclick="navigate('/raffle')">+ Create Another</button>
+      </div>
+    </div>
+
+    <!-- ===== RAFFLE ADMIN VIEW ===== -->
+    <div id="view-raffle-admin" class="view">
+      <div class="view-header">
+        <div class="view-header-info">
+          <div class="view-breadcrumb">🔒 Raffle Admin</div>
+          <h1 id="ra-title" class="view-title">Loading…</h1>
+          <p id="ra-desc" class="view-subtitle"></p>
+          <div class="ra-meta-row">
+            <span class="ra-meta-item">🏆 <span id="ra-prize-val"></span></span>
+            <span class="ra-meta-item">📅 Draw: <span id="ra-draw-val">—</span></span>
+          </div>
+        </div>
+        <div class="poll-status-wrap">
+          <div id="ra-status-badge" class="status-badge open">🟢 Open</div>
+          <button id="ra-toggle-btn" class="btn btn-sm btn-ghost" onclick="toggleRaffleStatus()">Close Raffle</button>
+        </div>
+      </div>
+
+      <!-- Stats -->
+      <div class="stats-row">
+        <div class="stat-card"><div class="stat-value" id="ra-stat-issued">0</div><div class="stat-label">Tickets Issued</div></div>
+        <div class="stat-card"><div class="stat-value" id="ra-stat-remaining">∞</div><div class="stat-label">Remaining</div></div>
+        <div class="stat-card"><div class="stat-value" id="ra-stat-winners">0</div><div class="stat-label">Draws Run</div></div>
+      </div>
+
+      <!-- Share Links -->
+      <div class="card share-card">
+        <h3 class="card-title">🔗 Share Links</h3>
+        <div class="link-section">
+          <div class="link-header"><span class="link-badge admin-badge">🔒 Admin Link</span></div>
+          <div class="link-box"><span id="ra-admin-url" class="link-text"></span>
+            <button class="btn-icon" id="ra-copy-admin" onclick="copyLink('ra-admin-url','ra-copy-admin')" title="Copy"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg></button>
+          </div>
+        </div>
+        <div class="link-section">
+          <div class="link-header"><span class="link-badge participant-badge">🎟️ Ticket Link</span></div>
+          <div class="link-box"><span id="ra-ticket-url" class="link-text"></span>
+            <button class="btn-icon" id="ra-copy-ticket" onclick="copyLink('ra-ticket-url','ra-copy-ticket')" title="Copy"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg></button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Winner Picker -->
+      <div class="card picker-card">
+        <h3 class="card-title">🎲 Raffle Draw</h3>
+        <div class="picker-machine">
+          <div class="picker-spin-display" id="ra-picker-spin">—</div>
+          <div id="ra-confetti" class="confetti-container"></div>
+        </div>
+        <div id="ra-picker-result" class="picker-result" style="display:none">
+          <div class="winner-label">🏆 Winner!</div>
+          <div class="winner-number" id="ra-winner-number"></div>
+          <div class="winner-name" id="ra-winner-name"></div>
+        </div>
+        <button class="btn btn-raffle btn-lg" id="ra-picker-btn" onclick="runRafflePicker()" style="margin-top:1.25rem;width:100%">🎲 Pick a Winner</button>
+      </div>
+
+      <!-- Ticket List -->
+      <div class="card">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1.25rem;flex-wrap:wrap;gap:.75rem">
+          <h3 class="card-title" style="margin:0">🎟️ Issued Tickets</h3>
+          <button class="btn btn-ghost btn-sm" onclick="exportRaffleCSV()">📥 Export CSV</button>
+        </div>
+        <div class="ticket-table-wrap">
+          <table class="ticket-table">
+            <thead><tr><th>Ticket #</th><th>Holder Name</th><th>Distributed By</th><th>Issued At</th></tr></thead>
+            <tbody id="ra-ticket-tbody"><tr><td colspan="4" style="text-align:center;color:var(--text-3)">No tickets yet</td></tr></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== RAFFLE TICKET ISSUANCE VIEW ===== -->
+    <div id="view-raffle-ticket" class="view">
+      <div class="view-header centered">
+        <h1 id="rt-title" class="view-title">Loading…</h1>
+        <p id="rt-desc" class="view-subtitle"></p>
+        <div class="ra-meta-row" style="justify-content:center">
+          <span class="ra-meta-item">🏆 <span id="rt-prize-val"></span></span>
+          <span class="ra-meta-item">📅 Draw: <span id="rt-draw-val">—</span></span>
+        </div>
+        <p id="rt-remaining" style="font-size:.8rem;color:var(--primary-lt);margin-top:.5rem"></p>
+      </div>
+
+      <!-- Closed / Full messages -->
+      <div id="rt-closed-msg" class="card" style="display:none;text-align:center;padding:2rem">
+        <div style="font-size:2.5rem;margin-bottom:.75rem">🔒</div>
+        <h2>Raffle is Closed</h2>
+        <p style="color:var(--text-2);margin-top:.5rem">This raffle is no longer accepting new tickets.</p>
+      </div>
+      <div id="rt-full-msg" class="card" style="display:none;text-align:center;padding:2rem">
+        <div style="font-size:2.5rem;margin-bottom:.75rem">🎟️</div>
+        <h2>All Tickets Sold!</h2>
+        <p style="color:var(--text-2);margin-top:.5rem">Maximum tickets have been issued for this raffle.</p>
+      </div>
+
+      <!-- Issue form -->
+      <div id="rt-issue-section" style="display:none">
+        <div class="card create-card">
+          <h2 class="card-title">🎟️ Issue a Ticket</h2>
+          <form id="rt-issue-form" class="form" onsubmit="handleIssueTicket(event)">
+            <div class="form-group">
+              <label class="form-label" for="rt-holder-name">Ticket Holder Name <span class="required">*</span></label>
+              <input type="text" id="rt-holder-name" class="form-input" placeholder="Full name of the participant" maxlength="100" required autocomplete="name" />
+            </div>
+            <div class="form-group">
+              <label class="form-label" for="rt-holder-contact">Contact (Phone or Email) <span class="required">*</span></label>
+              <input type="text" id="rt-holder-contact" class="form-input" placeholder="+1 555-1234 or email@example.com" maxlength="100" required />
+            </div>
+            <div class="form-group">
+              <label class="form-label" for="rt-distributor-name">Your Name (Distributor) <span class="required">*</span></label>
+              <input type="text" id="rt-distributor-name" class="form-input" placeholder="Your name — saved in system, not printed on ticket" maxlength="100" required />
+              <span style="font-size:.72rem;color:var(--text-3);margin-top:.25rem">⚠️ This name is recorded for admin tracking only and will NOT appear on the ticket.</span>
+            </div>
+            <button type="submit" class="btn btn-raffle btn-lg btn-full" id="rt-issue-btn">🎟️ Issue Ticket</button>
+            <div id="rt-error" class="error-msg"></div>
+          </form>
+        </div>
+      </div>
+
+      <!-- Generated Ticket -->
+      <div id="rt-ticket-section" style="display:none">
+        <p style="text-align:center;color:var(--text-2);margin-bottom:1rem;font-size:.9rem">Your ticket is ready! Download or share it below.</p>
+
+        <!-- Ticket render (captured by html2canvas) -->
+        <div id="rt-ticket-canvas" class="ticket-render template-modern">
+          <div class="tk-left">
+            <div class="tk-raffle-name" id="tk-raffle-name"></div>
+            <div class="tk-prize" id="tk-prize"></div>
+            <div class="tk-draw" id="tk-draw"></div>
+            <div class="tk-divider"></div>
+            <div class="tk-holder-label">TICKET HOLDER</div>
+            <div class="tk-holder" id="tk-holder"></div>
+            <div class="tk-contact" id="tk-contact"></div>
+          </div>
+          <div class="tk-stub">
+            <div class="tk-stub-label">TICKET</div>
+            <div class="tk-number" id="tk-number"></div>
+            <div class="tk-stub-decoration">✦</div>
+          </div>
+        </div>
+
+        <div class="ticket-actions">
+          <button class="btn btn-raffle" id="rt-download-btn" onclick="downloadTicket()">📥 Download Ticket</button>
+          <button class="btn btn-whatsapp" onclick="shareOnWhatsApp()">💬 Share on WhatsApp</button>
+        </div>
+        <div style="text-align:center;margin-top:1rem">
+          <button class="btn btn-ghost btn-sm" onclick="issueAnotherTicket()">+ Issue Another Ticket</button>
+        </div>
+      </div>
+    </div>
+
     <!-- ===== NOT FOUND VIEW ===== -->
     <div id="view-notfound" class="view">
       <div class="notfound">
         <div class="notfound-icon">🔍</div>
-        <h1>Poll Not Found</h1>
-        <p>This poll may have been deleted or the link is incorrect.</p>
-        <button class="btn btn-primary" onclick="navigate('/')">Create a New Poll</button>
+        <h1>Page Not Found</h1>
+        <p>This link may have expired or is incorrect.</p>
+        <button class="btn btn-primary" onclick="navigate('/')">Go Home</button>
       </div>
     </div>
 
@@ -360,15 +606,16 @@
   <!-- Firebase SDK (compat) -->
   <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
-
-  <!-- html2canvas for PNG export -->
+  <!-- html2canvas -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
-
   <!-- App -->
   <script src="js/firebase-config.js"></script>
   <script src="js/app.js"></script>
   <script src="js/create.js"></script>
   <script src="js/admin.js"></script>
   <script src="js/participate.js"></script>
+  <script src="js/raffle-create.js"></script>
+  <script src="js/raffle-admin.js"></script>
+  <script src="js/raffle-ticket.js"></script>
 </body>
 </html>

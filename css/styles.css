@@ -694,3 +694,214 @@ input[type="time"]::-webkit-calendar-picker-indicator { filter: invert(.7); curs
   font-size: .9rem; color: var(--text-2);
 }
 .thankyou-choice strong { color: #a78bfa; }
+
+/* ============================================================
+   RAFFLE MANAGER STYLES
+============================================================ */
+
+/* === Feature Tabs (Home) === */
+.feature-tabs {
+  display: flex; gap: .75rem;
+  padding: 1.5rem 0 0;
+  border-bottom: 1px solid var(--glass-border);
+  margin-bottom: 0;
+}
+.feature-tab {
+  display: flex; align-items: center; gap: .5rem;
+  padding: .65rem 1.5rem; border-radius: var(--r-md) var(--r-md) 0 0;
+  background: transparent; border: 1px solid transparent; border-bottom: none;
+  font-family: inherit; font-size: .9rem; font-weight: 600; color: var(--text-3);
+  cursor: pointer; transition: var(--t); position: relative; bottom: -1px;
+}
+.feature-tab:hover { color: var(--text-2); background: var(--glass); }
+.feature-tab.active {
+  color: var(--text); background: var(--glass);
+  border-color: var(--glass-border);
+  border-bottom-color: var(--bg);
+}
+.feature-pane { display: none; }
+.feature-pane.active { display: block; }
+
+/* === Raffle color accents === */
+:root {
+  --raffle:    #14b8a6;
+  --raffle-lt: #2dd4bf;
+  --raffle-dk: #0d9488;
+  --raffle-glow: rgba(20,184,166,.3);
+}
+
+.gradient-text-teal {
+  background: linear-gradient(135deg, #14b8a6, #06b6d4);
+  -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+}
+.raffle-badge {
+  background: rgba(20,184,166,.15); border: 1px solid rgba(20,184,166,.35); color: #2dd4bf;
+}
+
+/* === Raffle Buttons === */
+.btn-raffle {
+  background: linear-gradient(135deg, #0d9488, #0891b2);
+  color: #fff; padding: .7rem 1.5rem; font-size: .95rem;
+  box-shadow: 0 4px 20px rgba(20,184,166,.35);
+}
+.btn-raffle:hover { transform: translateY(-1px); box-shadow: 0 6px 28px rgba(20,184,166,.5); }
+.btn-raffle:active { transform: translateY(0); }
+
+.btn-whatsapp {
+  background: linear-gradient(135deg, #25d366, #128c7e);
+  color: #fff; padding: .7rem 1.5rem; font-size: .95rem;
+  border: none; border-radius: var(--r-md); font-family: inherit; font-weight: 600;
+  cursor: pointer; transition: var(--t); display: inline-flex; align-items: center; gap: .5rem;
+  box-shadow: 0 4px 20px rgba(37,211,102,.3);
+}
+.btn-whatsapp:hover { transform: translateY(-1px); box-shadow: 0 6px 28px rgba(37,211,102,.5); }
+
+/* === Template Picker === */
+.tpl-grid { display: grid; grid-template-columns: repeat(3,1fr); gap: .75rem; }
+
+.tpl-card {
+  border: 2px solid var(--glass-border); border-radius: var(--r-md);
+  overflow: hidden; cursor: pointer; transition: var(--t);
+  display: flex; flex-direction: column;
+}
+.tpl-card:hover { border-color: var(--raffle-lt); transform: translateY(-2px); }
+.tpl-card.selected { border-color: var(--raffle-lt); box-shadow: 0 0 0 3px var(--raffle-glow); }
+
+.tpl-preview {
+  height: 72px; display: flex; align-items: center; justify-content: center;
+  position: relative;
+}
+.tpl-modern-prev  { background: linear-gradient(135deg, #0d9488, #7c3aed); }
+.tpl-classic-prev { background: linear-gradient(135deg, #78350f, #b45309); }
+.tpl-festive-prev { background: linear-gradient(135deg, #be185d, #7c3aed, #0d9488); }
+
+.tpl-num {
+  font-size: 1.1rem; font-weight: 900; color: #fff;
+  text-shadow: 0 2px 8px rgba(0,0,0,.5); letter-spacing: .05em;
+}
+.tpl-name {
+  text-align: center; font-size: .75rem; font-weight: 700; color: var(--text-2);
+  padding: .4rem; background: var(--glass);
+}
+
+/* === Raffle Admin Meta === */
+.ra-meta-row {
+  display: flex; gap: 1.25rem; flex-wrap: wrap;
+  font-size: .85rem; color: var(--text-2); margin-top: .4rem;
+}
+.ra-meta-item { display: flex; align-items: center; gap: .35rem; }
+
+/* === Ticket Table === */
+.ticket-table-wrap { overflow-x: auto; border-radius: var(--r-md); }
+.ticket-table {
+  width: 100%; border-collapse: collapse;
+  font-size: .85rem;
+}
+.ticket-table th {
+  text-align: left; padding: .65rem 1rem;
+  background: rgba(20,184,166,.08); color: var(--raffle-lt);
+  font-size: .72rem; font-weight: 700; text-transform: uppercase; letter-spacing: .06em;
+  white-space: nowrap;
+}
+.ticket-table td {
+  padding: .7rem 1rem; border-bottom: 1px solid var(--glass-border); color: var(--text-2);
+}
+.ticket-table tr:last-child td { border-bottom: none; }
+.ticket-table tr:hover td { background: rgba(255,255,255,.02); }
+.ticket-num-badge {
+  background: rgba(20,184,166,.15); border: 1px solid rgba(20,184,166,.3);
+  color: var(--raffle-lt); font-weight: 800; font-size: .8rem;
+  padding: .15rem .55rem; border-radius: 100px; font-family: monospace;
+}
+.ticket-time { font-size: .75rem; color: var(--text-3); white-space: nowrap; }
+.no-tickets-row { text-align: center; color: var(--text-3); padding: 1.5rem !important; }
+
+/* === Winner Picker === */
+.picker-card { text-align: center; position: relative; overflow: hidden; }
+.picker-machine {
+  margin: 1.25rem 0 .75rem;
+  background: rgba(0,0,0,.35); border: 2px solid var(--glass-border);
+  border-radius: var(--r-lg); padding: 1.5rem 1rem;
+  position: relative; overflow: hidden; min-height: 90px;
+  display: flex; align-items: center; justify-content: center;
+}
+.picker-spin-display {
+  font-size: 2.8rem; font-weight: 900;
+  background: linear-gradient(135deg, #14b8a6, #7c3aed);
+  -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+  letter-spacing: .05em; font-family: monospace;
+  transition: none;
+}
+.picker-result {
+  padding: 1.25rem; margin-top: .75rem;
+  background: rgba(20,184,166,.08); border: 1px solid rgba(20,184,166,.25);
+  border-radius: var(--r-lg); animation: fadeUp .4s ease;
+}
+.winner-label { font-size: .8rem; font-weight: 700; color: var(--raffle-lt); text-transform: uppercase; letter-spacing: .08em; }
+.winner-number { font-size: 2.2rem; font-weight: 900; color: #fff; margin: .25rem 0; font-family: monospace; }
+.winner-name   { font-size: 1.1rem; font-weight: 600; color: var(--text-2); }
+
+/* Confetti */
+.confetti-container { position: absolute; inset: 0; pointer-events: none; overflow: hidden; }
+.confetti-dot {
+  position: absolute; top: -10px; border-radius: 50%;
+  animation: confettiFall linear forwards;
+}
+@keyframes confettiFall {
+  0%   { transform: translateY(0) rotate(0deg); opacity: 1; }
+  100% { transform: translateY(120px) rotate(360deg); opacity: 0; }
+}
+
+/* === Ticket Render (for download) === */
+.ticket-render {
+  display: flex; width: 100%; max-width: 600px; margin: 0 auto 1.25rem;
+  border-radius: var(--r-lg); overflow: hidden;
+  box-shadow: 0 12px 40px rgba(0,0,0,.5);
+  min-height: 200px;
+}
+
+/* Modern Template */
+.template-modern { background: linear-gradient(135deg, #0f0c2e, #1a0a3d); border: 1px solid rgba(139,92,246,.3); }
+.template-modern .tk-left  { background: linear-gradient(135deg, rgba(124,58,237,.2), rgba(20,184,166,.1)); }
+.template-modern .tk-stub  { background: linear-gradient(135deg, #7c3aed, #14b8a6); }
+.template-modern .tk-number { color: #fff; }
+.template-modern .tk-raffle-name { color: #e0e7ff; }
+
+/* Classic Template */
+.template-classic { background: linear-gradient(135deg, #1c0a00, #2d1200); border: 1px solid rgba(180,83,9,.4); }
+.template-classic .tk-left  { background: linear-gradient(135deg, rgba(180,83,9,.15), rgba(120,53,15,.1)); }
+.template-classic .tk-stub  { background: linear-gradient(135deg, #b45309, #78350f); }
+.template-classic .tk-number { color: #fef3c7; }
+.template-classic .tk-raffle-name { color: #fde68a; }
+
+/* Festive Template */
+.template-festive { background: linear-gradient(135deg, #0c0020, #001a1a); border: 1px solid rgba(190,24,93,.4); }
+.template-festive .tk-left  { background: linear-gradient(135deg, rgba(190,24,93,.15), rgba(13,148,136,.1)); }
+.template-festive .tk-stub  { background: linear-gradient(135deg, #be185d, #0d9488); }
+.template-festive .tk-number { color: #fff; }
+.template-festive .tk-raffle-name { color: #fce7f3; }
+
+/* Ticket shared structure */
+.tk-left {
+  flex: 1; padding: 1.25rem 1.4rem;
+  display: flex; flex-direction: column; justify-content: center; gap: .35rem;
+  border-right: 2px dashed rgba(255,255,255,.15);
+}
+.tk-stub {
+  width: 120px; flex-shrink: 0;
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  gap: .4rem; padding: 1rem .75rem;
+}
+.tk-raffle-name { font-size: 1rem; font-weight: 800; letter-spacing: -.01em; line-height: 1.2; }
+.tk-prize       { font-size: .78rem; color: rgba(255,255,255,.7); margin-top: .1rem; }
+.tk-draw        { font-size: .72rem; color: rgba(255,255,255,.5); }
+.tk-divider     { height: 1px; background: rgba(255,255,255,.12); margin: .5rem 0; }
+.tk-holder-label { font-size: .6rem; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; color: rgba(255,255,255,.4); }
+.tk-holder      { font-size: .95rem; font-weight: 700; color: #fff; }
+.tk-contact     { font-size: .78rem; color: rgba(255,255,255,.6); }
+.tk-stub-label  { font-size: .6rem; font-weight: 700; letter-spacing: .15em; text-transform: uppercase; color: rgba(255,255,255,.7); }
+.tk-number      { font-size: 1.6rem; font-weight: 900; letter-spacing: .05em; font-family: monospace; line-height: 1; }
+.tk-stub-decoration { font-size: 1.2rem; color: rgba(255,255,255,.4); }
+
+/* Ticket action buttons */
+.ticket-actions { display: flex; gap: .75rem; justify-content: center; flex-wrap: wrap; margin-bottom: .5rem; }

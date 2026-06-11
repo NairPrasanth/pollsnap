@@ -44,10 +44,7 @@ function teardown() {
 async function handleRoute() {
   teardown();
 
-  if (!firebaseReady) {
-    showView('config');
-    return;
-  }
+  if (!firebaseReady) { showView('config'); return; }
 
   const hash  = window.location.hash.replace(/^#\/?/, '');
   const parts = hash.split('/').filter(Boolean);
@@ -56,6 +53,14 @@ async function handleRoute() {
   if (!page) {
     showView('home');
     resetCreateForm();
+    switchHomeTab('poll');
+    return;
+  }
+
+  if (page === 'raffle') {
+    showView('home');
+    resetCreateForm();
+    switchHomeTab('raffle');
     return;
   }
 
@@ -63,6 +68,13 @@ async function handleRoute() {
     const data = JSON.parse(sessionStorage.getItem('pollsnap_success') || 'null');
     if (!data) { showView('home'); return; }
     showSuccessView(data);
+    return;
+  }
+
+  if (page === 'raffle-success') {
+    const data = JSON.parse(sessionStorage.getItem('pollsnap_raffle_success') || 'null');
+    if (!data) { showView('home'); return; }
+    showRaffleSuccessView(data);
     return;
   }
 
@@ -81,11 +93,34 @@ async function handleRoute() {
     return;
   }
 
+  if (page === 'rt' && parts[1]) {
+    showView('raffle-ticket');
+    loadRaffleTicketView(parts[1]);
+    return;
+  }
+
+  if (page === 'ra' && parts[1] && parts[2]) {
+    showView('raffle-admin');
+    loadRaffleAdminView(parts[1], parts[2]);
+    return;
+  }
+
   showView('notfound');
 }
 
 window.addEventListener('hashchange', handleRoute);
 window.addEventListener('load', handleRoute);
+
+// ─── Home Tab Switcher ────────────────────────────────────────
+function switchHomeTab(tab) {
+  ['poll','raffle'].forEach(t => {
+    document.getElementById('ftab-' + t)?.classList.toggle('active', t === tab);
+    document.getElementById('pane-' + t)?.classList.toggle('active', t === tab);
+  });
+  const navBtn = document.getElementById('nav-new-poll-btn');
+  if (navBtn) navBtn.textContent = tab === 'raffle' ? '+ New Raffle' : '+ New Poll';
+}
+window.switchHomeTab = switchHomeTab;
 
 // ─── Success View ─────────────────────────────────────────────
 function showSuccessView(data) {
