@@ -192,7 +192,7 @@ async function toggleHideResults() {
 }
 window.toggleHideResults = toggleHideResults;
 
-// ─── Export: CSV (includes participant names) ─────────────────
+// ─── Export: CSV (grouped by option) ────────────────────────
 function exportCSV() {
   if (!adminPollData) return;
   const d      = adminPollData;
@@ -208,35 +208,42 @@ function exportCSV() {
     d.time ? ['Time', formatTime(d.time)] : null,
     ['Total Votes', total],
     ['Status', d.isOpen ? 'Open' : 'Closed'],
+    ['Results', d.hideResults ? 'Hidden from participants' : 'Visible to participants'],
     ['Exported At', new Date().toLocaleString()],
     [],
-    ['--- Vote Totals ---'],
-    ['Option', 'Votes', 'Percentage']
+    ['--- Results by Option ---']
   ].filter(Boolean);
+
+  // Group voters by option
+  const groups = {};
+  d.options.forEach((_, i) => { groups[i] = []; });
+  voters.forEach(v => {
+    const idx = v.optionIndex !== undefined ? v.optionIndex : -1;
+    if (groups[idx] !== undefined) groups[idx].push(v);
+  });
 
   d.options.forEach((opt, i) => {
     const v   = votes[i] || 0;
     const pct = total > 0 ? ((v / total) * 100).toFixed(1) + '%' : '0.0%';
-    rows.push([opt, v, pct]);
-  });
-
-  if (voters.length > 0) {
     rows.push([]);
-    rows.push(['--- Participant Details ---']);
-    rows.push(['Name', 'Vote', 'Time']);
-    const sorted = [...voters].sort((a, b) => {
-      const ta = a.votedAt ? (a.votedAt.seconds || 0) : 0;
-      const tb = b.votedAt ? (b.votedAt.seconds || 0) : 0;
-      return ta - tb;
-    });
-    sorted.forEach(v => {
-      const optLabel = d.options[v.optionIndex] || v.option || '—';
-      const timeStr  = v.votedAt
-        ? new Date(v.votedAt.seconds * 1000).toLocaleString()
-        : '';
-      rows.push([v.name, optLabel, timeStr]);
-    });
-  }
+    rows.push([`Option: ${opt}`, `${v} vote${v !== 1 ? 's' : ''}`, pct]);
+
+    const group = (groups[i] || []).sort((a, b) =>
+      (a.votedAt ? a.votedAt.seconds : 0) - (b.votedAt ? b.votedAt.seconds : 0)
+    );
+
+    if (group.length === 0) {
+      rows.push(['  (no votes)']);
+    } else {
+      rows.push(['  Name', 'Time']);
+      group.forEach(voter => {
+        const timeStr = voter.votedAt
+          ? new Date(voter.votedAt.seconds * 1000).toLocaleString()
+          : '';
+        rows.push([`  ${voter.name}`, timeStr]);
+      });
+    }
+  });
 
   const csv  = rows.map(r => r.map(c => `"${String(c).replace(/"/g, '""')}"`).join(',')).join('\n');
   const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
@@ -248,7 +255,7 @@ function exportCSV() {
 }
 window.exportCSV = exportCSV;
 
-// ─── Export: Clipboard (includes names) ──────────────────────
+// ─── Export: Clipboard (grouped by option) ───────────────────
 async function exportClipboard() {
   if (!adminPollData) return;
   const d      = adminPollData;
@@ -256,31 +263,37 @@ async function exportClipboard() {
   const voters = d.voterDetails || [];
   const total  = Object.values(votes).reduce((a, b) => a + b, 0);
 
+  // Group voters by option
+  const groups = {};
+  d.options.forEach((_, i) => { groups[i] = []; });
+  voters.forEach(v => {
+    const idx = v.optionIndex !== undefined ? v.optionIndex : -1;
+    if (groups[idx] !== undefined) groups[idx].push(v);
+  });
+
   let text = `📊 ${d.title}\n`;
   if (d.description) text += `${d.description}\n`;
-  text += `\n❓ ${d.question}\n\n`;
+  text += `\n❓ ${d.question}\n`;
+  text += `Total: ${total} vote${total !== 1 ? 's' : ''}\n\n`;
 
   d.options.forEach((opt, i) => {
     const v   = votes[i] || 0;
     const pct = total > 0 ? Math.round((v / total) * 100) : 0;
     const bar = '█'.repeat(Math.round(pct / 5)) + '░'.repeat(20 - Math.round(pct / 5));
-    text += `${opt}\n${bar} ${v} votes (${pct}%)\n\n`;
+    text += `▸ ${opt}\n${bar} ${v} vote${v !== 1 ? 's' : ''} (${pct}%)\n`;
+
+    const group = (groups[i] || []).sort((a, b) =>
+      (a.votedAt ? a.votedAt.seconds : 0) - (b.votedAt ? b.votedAt.seconds : 0)
+    );
+    if (group.length > 0) {
+      group.forEach(voter => { text += `   • ${voter.name}\n`; });
+    } else {
+      text += `   (no votes)\n`;
+    }
+    text += '\n';
   });
 
-  text += `Total: ${total} vote${total !== 1 ? 's' : ''}\n`;
-
-  if (voters.length > 0) {
-    text += `\n👥 Participants (${voters.length}):\n`;
-    const sorted = [...voters].sort((a, b) => {
-      return (a.votedAt ? a.votedAt.seconds : 0) - (b.votedAt ? b.votedAt.seconds : 0);
-    });
-    sorted.forEach(v => {
-      const optLabel = d.options[v.optionIndex] || v.option || '—';
-      text += `  • ${v.name} → ${optLabel}\n`;
-    });
-  }
-
-  text += `\nExported via PollSnap`;
+  text += `Exported via PollSnap`;
 
   try {
     await navigator.clipboard.writeText(text);
