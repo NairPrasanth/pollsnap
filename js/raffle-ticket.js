@@ -136,8 +136,17 @@ function renderTicket(d) {
 // ─── Generate ticket canvas blob ──────────────────────────────
 async function generateTicketBlob(scale) {
   const el = document.getElementById('rt-ticket-canvas');
+
+  // Wait for fonts to fully load so text renders correctly
+  await document.fonts.ready;
+
   const canvas = await html2canvas(el, {
-    scale: scale || 3, logging: false, useCORS: true, allowTaint: true, backgroundColor: null
+    scale: scale || 3,
+    logging: false,
+    useCORS: true,
+    allowTaint: true,
+    backgroundColor: null,
+    foreignObjectRendering: false   // must be false for correct text rendering
   });
   return new Promise(resolve => canvas.toBlob(resolve, 'image/png'));
 }

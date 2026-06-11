@@ -872,11 +872,14 @@ input[type="time"]::-webkit-calendar-picker-indicator { filter: invert(.7); curs
 .tk-field-value { flex: 1; font-size: .78rem; font-weight: 500; border-bottom: 1px solid currentColor; opacity: .65; padding-bottom: 1px; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 
 /* Stub */
-.tk-stub { width: 140px; flex-shrink: 0; display: flex; align-items: center; justify-content: center; border-left: 2px dashed rgba(0,0,0,.18); }
-.tk-stub-inner { display: flex; flex-direction: column; align-items: center; gap: .3rem; padding: .75rem .5rem; text-align: center; writing-mode: vertical-rl; transform: rotate(180deg); }
-.tk-stub-label { font-size: .65rem; font-weight: 900; letter-spacing: .12em; text-transform: uppercase; }
-.tk-stub-admit { font-size: .6rem; font-weight: 600; opacity: .75; letter-spacing: .05em; }
-.tk-number     { font-size: 1.3rem; font-weight: 900; font-family: monospace; letter-spacing: .04em; }
+.tk-stub { width: 130px; flex-shrink: 0; display: flex; align-items: stretch; border-left: 2px dashed rgba(0,0,0,.2); }
+.tk-stub-inner {
+  flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center;
+  gap: .3rem; padding: .75rem .4rem; text-align: center;
+}
+.tk-stub-label { font-size: .55rem; font-weight: 900; letter-spacing: .1em; text-transform: uppercase; line-height: 1.3; }
+.tk-stub-admit { font-size: .52rem; font-weight: 600; opacity: .7; letter-spacing: .04em; }
+.tk-number     { font-size: 1.5rem; font-weight: 900; font-family: monospace; letter-spacing: .05em; line-height: 1; margin: .2rem 0; }
 
 /* Classic (orange/white) */
 .template-classic { background: #fff; }
