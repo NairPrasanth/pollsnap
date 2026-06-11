@@ -2,7 +2,7 @@
 // PollSnap — Service Worker (PWA offline support)
 // ============================================================
 
-const CACHE_NAME  = 'pollsnap-v1';
+const CACHE_NAME  = 'pollsnap-v3';
 const SHELL_FILES = [
   './',
   './index.html',
@@ -12,6 +12,9 @@ const SHELL_FILES = [
   './js/create.js',
   './js/admin.js',
   './js/participate.js',
+  './js/raffle-create.js',
+  './js/raffle-admin.js',
+  './js/raffle-ticket.js',
   './manifest.json',
   './icons/icon-192.png',
   './icons/icon-512.png',
