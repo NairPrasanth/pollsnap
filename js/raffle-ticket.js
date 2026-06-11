@@ -2,8 +2,8 @@
 // PollSnap — Raffle Ticket Issuance
 // ============================================================
 
-let currentRaffle  = null;
-let currentTicket  = null;
+let currentRaffle = null;
+let currentTicket = null;
 
 // ─── Load ticket-issue page ───────────────────────────────────
 async function loadRaffleTicketView(raffleId) {
@@ -20,8 +20,8 @@ async function loadRaffleTicketView(raffleId) {
     const data = snap.data();
     currentRaffle = { ...data, id: raffleId };
 
-    document.getElementById('rt-title').textContent = data.title;
-    document.getElementById('rt-desc').textContent  = data.desc || '';
+    document.getElementById('rt-title').textContent     = data.title;
+    document.getElementById('rt-desc').textContent      = data.desc || '';
     document.getElementById('rt-prize-val').textContent = data.prize;
     const drawEl = document.getElementById('rt-draw-val');
     if (drawEl) drawEl.textContent = data.drawDate ? formatDate(data.drawDate) : '—';
@@ -32,9 +32,9 @@ async function loadRaffleTicketView(raffleId) {
     }
 
     if (data.maxTickets) {
-      const issued = (data.nextTicketNumber || 1) - 1;
+      const issued    = (data.nextTicketNumber || 1) - 1;
       const remaining = data.maxTickets - issued;
-      const remEl = document.getElementById('rt-remaining');
+      const remEl     = document.getElementById('rt-remaining');
       if (remEl) remEl.textContent = remaining > 0 ? `${remaining} tickets remaining` : '';
       if (remaining <= 0) {
         document.getElementById('rt-full-msg').style.display = 'block';
@@ -56,8 +56,8 @@ async function handleIssueTicket(e) {
   e.preventDefault();
   hideError('rt-error');
 
-  const holderName     = document.getElementById('rt-holder-name').value.trim();
-  const holderContact  = document.getElementById('rt-holder-contact').value.trim();
+  const holderName      = document.getElementById('rt-holder-name').value.trim();
+  const holderContact   = document.getElementById('rt-holder-contact').value.trim();
   const distributorName = document.getElementById('rt-distributor-name').value.trim();
 
   if (!holderName)      { showError('rt-error', 'Please enter the ticket holder name.'); return; }
@@ -77,7 +77,7 @@ async function handleIssueTicket(e) {
       const nextNum    = raffleSnap.data().nextTicketNumber || 1;
       ticketNumber     = String(nextNum).padStart(4, '0');
 
-      const ticketRef  = raffleRef.collection('tickets').doc();
+      const ticketRef = raffleRef.collection('tickets').doc();
       ticketId = ticketRef.id;
 
       tx.update(raffleRef, { nextTicketNumber: firebase.firestore.FieldValue.increment(1) });
@@ -92,7 +92,8 @@ async function handleIssueTicket(e) {
       holderName, holderContact,
       raffleName: currentRaffle.title,
       prize:      currentRaffle.prize,
-      templateId: currentRaffle.templateId || 'modern',
+      templateId: currentRaffle.templateId || 'classic',
+      customBgUrl: currentRaffle.customBgUrl || null,
       drawDate:   currentRaffle.drawDate || ''
     };
 
@@ -112,15 +113,33 @@ window.handleIssueTicket = handleIssueTicket;
 // ─── Render Ticket ─────────────────────────────────────────────
 function renderTicket(d) {
   const canvas = document.getElementById('rt-ticket-canvas');
-  canvas.className = 'ticket-render template-' + (d.templateId || 'modern');
+  canvas.className = 'ticket-render template-' + (d.templateId || 'classic');
+
+  // Apply custom background image if set
+  if (d.templateId === 'custom' && d.customBgUrl) {
+    canvas.style.backgroundImage    = `url(${d.customBgUrl})`;
+    canvas.style.backgroundSize     = 'cover';
+    canvas.style.backgroundPosition = 'center';
+  } else {
+    canvas.style.backgroundImage = '';
+  }
 
   document.getElementById('tk-raffle-name').textContent = d.raffleName;
-  document.getElementById('tk-number').textContent      = '#' + d.number;
+  document.getElementById('tk-number').textContent      = d.number;
   document.getElementById('tk-holder').textContent      = d.holderName;
   document.getElementById('tk-contact').textContent     = d.holderContact;
   document.getElementById('tk-prize').textContent       = d.prize;
   const drawEl = document.getElementById('tk-draw');
-  if (drawEl) drawEl.textContent = d.drawDate ? '📅 ' + formatDate(d.drawDate) : '';
+  if (drawEl) drawEl.textContent = d.drawDate ? formatDate(d.drawDate) : '';
+}
+
+// ─── Generate ticket canvas blob ──────────────────────────────
+async function generateTicketBlob(scale) {
+  const el = document.getElementById('rt-ticket-canvas');
+  const canvas = await html2canvas(el, {
+    scale: scale || 3, logging: false, useCORS: true, allowTaint: true, backgroundColor: null
+  });
+  return new Promise(resolve => canvas.toBlob(resolve, 'image/png'));
 }
 
 // ─── Download as Image ─────────────────────────────────────────
@@ -133,12 +152,12 @@ async function downloadTicket() {
   btn.innerHTML = '⏳ Generating…'; btn.disabled = true;
 
   try {
-    const el = document.getElementById('rt-ticket-canvas');
-    const canvas = await html2canvas(el, { scale: 3, logging: false, useCORS: true, backgroundColor: null });
+    const blob = await generateTicketBlob(3);
     const link = document.createElement('a');
     link.download = `ticket-${currentTicket.number}.png`;
-    link.href = canvas.toDataURL('image/png');
+    link.href = URL.createObjectURL(blob);
     link.click();
+    setTimeout(() => URL.revokeObjectURL(link.href), 5000);
     showToast('Ticket downloaded! 📥', 'success');
   } catch (err) {
     showToast('Download failed', 'error'); console.error(err);
@@ -148,17 +167,48 @@ async function downloadTicket() {
 }
 window.downloadTicket = downloadTicket;
 
-// ─── WhatsApp Share ────────────────────────────────────────────
-function shareOnWhatsApp() {
+// ─── WhatsApp Share (image via Web Share API) ─────────────────
+async function shareOnWhatsApp() {
   if (!currentTicket) return;
-  const d = currentTicket;
-  let text = `🎟️ *${d.raffleName}*\n\n`;
-  text += `Ticket Number: *#${d.number}*\n`;
-  text += `Name: ${d.holderName}\n`;
-  text += `Prize: 🏆 ${d.prize}\n`;
-  if (d.drawDate) text += `Draw Date: 📅 ${formatDate(d.drawDate)}\n`;
-  text += `\nGood luck! 🍀`;
-  window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, '_blank');
+
+  const btn = document.getElementById('rt-whatsapp-btn');
+  if (btn) { btn.disabled = true; btn.textContent = '⏳ Preparing…'; }
+
+  const text = `🎟️ *${currentTicket.raffleName}*\n\nTicket No: *#${currentTicket.number}*\nName: ${currentTicket.holderName}\nPrize: 🏆 ${currentTicket.prize}${currentTicket.drawDate ? '\nDraw: 📅 ' + formatDate(currentTicket.drawDate) : ''}\n\nGood luck! 🍀`;
+
+  try {
+    const blob = await generateTicketBlob(2);
+    const file = new File([blob], `ticket-${currentTicket.number}.png`, { type: 'image/png' });
+
+    // Web Share API with file (works on mobile Chrome/Safari)
+    if (navigator.share && navigator.canShare && navigator.canShare({ files: [file] })) {
+      await navigator.share({ title: `Raffle Ticket #${currentTicket.number}`, text, files: [file] });
+      showToast('Shared! 🎉', 'success');
+    } else if (navigator.share) {
+      // Share without file (desktop or unsupported)
+      await navigator.share({ title: `Raffle Ticket #${currentTicket.number}`, text });
+      showToast('Shared! 🎉', 'success');
+    } else {
+      // Fallback: download image + open WhatsApp web
+      const link = document.createElement('a');
+      link.href = URL.createObjectURL(blob);
+      link.download = `ticket-${currentTicket.number}.png`;
+      link.click();
+      setTimeout(() => {
+        window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, '_blank');
+        URL.revokeObjectURL(link.href);
+      }, 800);
+      showToast('Image downloaded — paste it in WhatsApp', 'success');
+    }
+  } catch (err) {
+    if (err.name !== 'AbortError') {
+      // Fallback to text-only WhatsApp
+      window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, '_blank');
+    }
+    console.error('Share error:', err);
+  } finally {
+    if (btn) { btn.disabled = false; btn.textContent = '💬 Share on WhatsApp'; }
+  }
 }
 window.shareOnWhatsApp = shareOnWhatsApp;
 

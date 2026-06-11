@@ -48,7 +48,6 @@
       <!-- ── POLL PANE ── -->
       <div id="pane-poll" class="feature-pane active">
         <div class="hero">
-          <div class="hero-badge">✨ Free Forever</div>
           <h1 class="hero-title">Create Polls<br><span class="gradient-text">That Matter</span></h1>
         </div>
 
@@ -131,7 +130,6 @@
       <!-- ── RAFFLE PANE ── -->
       <div id="pane-raffle" class="feature-pane">
         <div class="hero">
-          <div class="hero-badge raffle-badge">🎟️ Free Raffle Manager</div>
           <h1 class="hero-title">Run Raffles<br><span class="gradient-text-teal">Effortlessly</span></h1>
         </div>
 
@@ -169,18 +167,37 @@
             <div class="form-group">
               <label class="form-label">Ticket Template <span class="required">*</span></label>
               <div class="tpl-grid">
-                <div class="tpl-card selected" id="tpl-modern" onclick="selectRaffleTemplate('modern')">
-                  <div class="tpl-preview tpl-modern-prev"><span class="tpl-num">#0042</span></div>
-                  <span class="tpl-name">Modern</span>
-                </div>
-                <div class="tpl-card" id="tpl-classic" onclick="selectRaffleTemplate('classic')">
-                  <div class="tpl-preview tpl-classic-prev"><span class="tpl-num">#0042</span></div>
+                <div class="tpl-card selected" id="tpl-classic" onclick="selectRaffleTemplate('classic')">
+                  <div class="tpl-preview tpl-classic-prev"><span class="tpl-num">#0042</span><span class="tpl-label">RAFFLE TICKET</span></div>
                   <span class="tpl-name">Classic</span>
                 </div>
+                <div class="tpl-card" id="tpl-premium" onclick="selectRaffleTemplate('premium')">
+                  <div class="tpl-preview tpl-premium-prev"><span class="tpl-num">#0042</span><span class="tpl-label">RAFFLE TICKET</span></div>
+                  <span class="tpl-name">Premium</span>
+                </div>
                 <div class="tpl-card" id="tpl-festive" onclick="selectRaffleTemplate('festive')">
-                  <div class="tpl-preview tpl-festive-prev"><span class="tpl-num">#0042</span></div>
+                  <div class="tpl-preview tpl-festive-prev"><span class="tpl-num">#0042</span><span class="tpl-label">RAFFLE TICKET</span></div>
                   <span class="tpl-name">Festive</span>
                 </div>
+                <div class="tpl-card" id="tpl-custom" onclick="selectRaffleTemplate('custom')">
+                  <div class="tpl-preview tpl-custom-prev"><span class="tpl-upload-icon">🖼️</span><span class="tpl-label">Upload Image</span></div>
+                  <span class="tpl-name">Custom</span>
+                </div>
+              </div>
+
+              <!-- Custom image upload (shown only for custom template) -->
+              <div id="custom-upload-section" class="custom-upload-wrap" style="display:none">
+                <label class="upload-drop-zone" id="upload-drop-zone" for="raffle-bg-upload">
+                  <div class="upload-icon">🖼️</div>
+                  <div class="upload-text">Click to upload ticket background image</div>
+                  <div class="upload-hint">JPG, PNG or WebP · Max 5MB</div>
+                  <input type="file" id="raffle-bg-upload" accept="image/jpeg,image/png,image/webp" style="display:none" onchange="handleBgUploadPreview(this)" />
+                </label>
+                <div id="upload-preview-wrap" style="display:none">
+                  <img id="upload-preview-img" class="upload-preview-img" src="" alt="Preview" />
+                  <button type="button" class="btn btn-ghost btn-sm" onclick="clearBgUpload()">✕ Remove</button>
+                </div>
+                <div id="upload-error" class="error-msg"></div>
               </div>
             </div>
 
@@ -546,26 +563,42 @@
         <p style="text-align:center;color:var(--text-2);margin-bottom:1rem;font-size:.9rem">Your ticket is ready! Download or share it below.</p>
 
         <!-- Ticket render (captured by html2canvas) -->
-        <div id="rt-ticket-canvas" class="ticket-render template-modern">
+        <div id="rt-ticket-canvas" class="ticket-render template-classic">
           <div class="tk-left">
-            <div class="tk-raffle-name" id="tk-raffle-name"></div>
-            <div class="tk-prize" id="tk-prize"></div>
-            <div class="tk-draw" id="tk-draw"></div>
-            <div class="tk-divider"></div>
-            <div class="tk-holder-label">TICKET HOLDER</div>
-            <div class="tk-holder" id="tk-holder"></div>
-            <div class="tk-contact" id="tk-contact"></div>
+            <div class="tk-header">
+              <div class="tk-raffle-name" id="tk-raffle-name"></div>
+              <div class="tk-tagline">RAFFLE TICKET</div>
+            </div>
+            <div class="tk-body">
+              <div class="tk-field">
+                <span class="tk-field-label">Name:</span>
+                <span class="tk-field-value" id="tk-holder"></span>
+              </div>
+              <div class="tk-field">
+                <span class="tk-field-label">Contact:</span>
+                <span class="tk-field-value" id="tk-contact"></span>
+              </div>
+              <div class="tk-field">
+                <span class="tk-field-label">Date:</span>
+                <span class="tk-field-value" id="tk-draw"></span>
+              </div>
+            </div>
+            <div class="tk-footer-bar">
+              <span id="tk-prize"></span>
+            </div>
           </div>
           <div class="tk-stub">
-            <div class="tk-stub-label">TICKET</div>
-            <div class="tk-number" id="tk-number"></div>
-            <div class="tk-stub-decoration">✦</div>
+            <div class="tk-stub-inner">
+              <div class="tk-stub-label">RAFFLE TICKET</div>
+              <div class="tk-stub-admit">Admit One only</div>
+              <div class="tk-number" id="tk-number"></div>
+            </div>
           </div>
         </div>
 
         <div class="ticket-actions">
           <button class="btn btn-raffle" id="rt-download-btn" onclick="downloadTicket()">📥 Download Ticket</button>
-          <button class="btn btn-whatsapp" onclick="shareOnWhatsApp()">💬 Share on WhatsApp</button>
+          <button class="btn btn-whatsapp" id="rt-whatsapp-btn" onclick="shareOnWhatsApp()">💬 Share on WhatsApp</button>
         </div>
         <div style="text-align:center;margin-top:1rem">
           <button class="btn btn-ghost btn-sm" onclick="issueAnotherTicket()">+ Issue Another Ticket</button>
@@ -606,6 +639,7 @@
   <!-- Firebase SDK (compat) -->
   <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-storage-compat.js"></script>
   <!-- html2canvas -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
   <!-- App -->

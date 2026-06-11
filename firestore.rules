@@ -4,12 +4,11 @@
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
-    match /polls/{pollId} {
 
-      # Anyone can read a poll (needed for participants + admin)
+    # ─── Polls ───────────────────────────────────────────────
+    match /polls/{pollId} {
       allow read: if true;
 
-      # Create: anyone can create a poll (open service)
       allow create: if
         request.resource.data.keys().hasAll(['title','question','options','votes','isOpen','adminToken','createdAt'])
         && request.resource.data.title is string
@@ -19,12 +18,42 @@ service cloud.firestore {
         && request.resource.data.options.size() >= 2
         && request.resource.data.options.size() <= 10;
 
-      # Update: allow vote updates and admin updates
-      # (simple rule - app enforces adminToken check for admin ops)
       allow update: if true;
-
-      # Delete: not allowed via client
       allow delete: if false;
     }
+
+    # ─── Raffles ─────────────────────────────────────────────
+    match /raffles/{raffleId} {
+      # Anyone can read (needed for ticket issuance page + admin)
+      allow read: if true;
+
+      # Anyone can create a raffle
+      allow create: if
+        request.resource.data.keys().hasAll(['title','prize','isOpen','adminToken'])
+        && request.resource.data.title is string
+        && request.resource.data.title.size() > 0
+        && request.resource.data.title.size() <= 100;
+
+      # Allow admin updates (toggle open/close, winner history, nextTicketNumber)
+      allow update: if true;
+
+      allow delete: if false;
+
+      # ─── Tickets sub-collection ────────────────────────────
+      match /tickets/{ticketId} {
+        # Admin can read all tickets
+        allow read: if true;
+
+        # Anyone with the ticket-issue link can create a ticket
+        allow create: if
+          request.resource.data.keys().hasAll(['number','holderName','holderContact','distributorName','issuedAt'])
+          && request.resource.data.holderName is string
+          && request.resource.data.holderName.size() > 0;
+
+        allow update: if false;
+        allow delete: if false;
+      }
+    }
+
   }
 }

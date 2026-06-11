@@ -1,24 +1,74 @@
 // ============================================================
-// PollSnap — Raffle Creation
+// PollSnap — Raffle Creation (with custom image upload)
 // ============================================================
 
-let selectedRaffleTemplate = 'modern';
+let selectedRaffleTemplate = 'classic';
+let uploadedBgFile         = null;   // File object for custom bg
+let uploadedBgLocalUrl     = null;   // ObjectURL for preview
 
+// ─── Template Selection ───────────────────────────────────────
 function selectRaffleTemplate(id) {
   selectedRaffleTemplate = id;
   document.querySelectorAll('.tpl-card').forEach(c => c.classList.remove('selected'));
   const card = document.getElementById('tpl-' + id);
   if (card) card.classList.add('selected');
+
+  const uploadSection = document.getElementById('custom-upload-section');
+  if (uploadSection) uploadSection.style.display = id === 'custom' ? 'block' : 'none';
 }
 window.selectRaffleTemplate = selectRaffleTemplate;
 
+// ─── Custom BG Preview ────────────────────────────────────────
+function handleBgUploadPreview(input) {
+  const file = input.files[0];
+  if (!file) return;
+
+  if (file.size > 5 * 1024 * 1024) {
+    document.getElementById('upload-error').textContent = 'Image must be under 5MB.';
+    input.value = '';
+    return;
+  }
+  document.getElementById('upload-error').textContent = '';
+
+  if (uploadedBgLocalUrl) URL.revokeObjectURL(uploadedBgLocalUrl);
+  uploadedBgFile     = file;
+  uploadedBgLocalUrl = URL.createObjectURL(file);
+
+  const img  = document.getElementById('upload-preview-img');
+  const wrap = document.getElementById('upload-preview-wrap');
+  img.src = uploadedBgLocalUrl;
+  document.getElementById('upload-drop-zone').style.display = 'none';
+  wrap.style.display = 'flex';
+}
+window.handleBgUploadPreview = handleBgUploadPreview;
+
+function clearBgUpload() {
+  if (uploadedBgLocalUrl) URL.revokeObjectURL(uploadedBgLocalUrl);
+  uploadedBgFile     = null;
+  uploadedBgLocalUrl = null;
+  document.getElementById('raffle-bg-upload').value = '';
+  document.getElementById('upload-preview-img').src = '';
+  document.getElementById('upload-preview-wrap').style.display = 'none';
+  document.getElementById('upload-drop-zone').style.display    = 'flex';
+}
+window.clearBgUpload = clearBgUpload;
+
+// ─── Upload image to Firebase Storage ─────────────────────────
+async function uploadTicketBg(raffleId, file) {
+  if (!storage) throw new Error('Firebase Storage not initialized');
+  const ext = file.name.split('.').pop().toLowerCase();
+  const ref = storage.ref(`raffle-tickets/${raffleId}/bg.${ext}`);
+  const snap = await ref.put(file, { contentType: file.type });
+  return snap.ref.getDownloadURL();
+}
+
+// ─── Create Raffle ────────────────────────────────────────────
 async function handleCreateRaffle(e) {
   e.preventDefault();
   hideError('raffle-create-error');
 
   if (!firebaseReady) {
-    showError('raffle-create-error', '⚙️ Firebase is not configured.');
-    return;
+    showError('raffle-create-error', '⚙️ Firebase is not configured.'); return;
   }
 
   const title      = document.getElementById('raffle-title').value.trim();
@@ -30,6 +80,9 @@ async function handleCreateRaffle(e) {
 
   if (!title) { showError('raffle-create-error', 'Please enter a raffle name.'); return; }
   if (!prize) { showError('raffle-create-error', 'Please enter the prize description.'); return; }
+  if (selectedRaffleTemplate === 'custom' && !uploadedBgFile) {
+    showError('raffle-create-error', 'Please upload a background image for the Custom template.'); return;
+  }
   if (maxTickets !== null && (isNaN(maxTickets) || maxTickets < 1)) {
     showError('raffle-create-error', 'Max tickets must be a positive number.'); return;
   }
@@ -43,11 +96,20 @@ async function handleCreateRaffle(e) {
     const raffleId   = generateId(8);
     const adminToken = generateId(16);
 
+    // Upload custom bg if needed
+    let customBgUrl = null;
+    if (selectedRaffleTemplate === 'custom' && uploadedBgFile) {
+      btnLoad.textContent = 'Uploading image…';
+      customBgUrl = await uploadTicketBg(raffleId, uploadedBgFile);
+      btnLoad.textContent = 'Creating…';
+    }
+
     await db.collection('raffles').doc(raffleId).set({
       title, desc: desc || '', prize,
       drawDate:    drawDate || '',
-      maxTickets:  maxTickets,
+      maxTickets,
       templateId:  selectedRaffleTemplate,
+      customBgUrl: customBgUrl || null,
       isOpen:      true,
       adminToken,
       nextTicketNumber: 1,
@@ -65,6 +127,7 @@ async function handleCreateRaffle(e) {
     showError('raffle-create-error', 'Failed to create raffle: ' + (err.message || err));
   } finally {
     btn.disabled = false; btnText.style.display = 'inline'; btnLoad.style.display = 'none';
+    btnLoad.textContent = 'Creating…';
   }
 }
 window.handleCreateRaffle = handleCreateRaffle;
@@ -88,7 +151,8 @@ window.showRaffleSuccessView = showRaffleSuccessView;
 function resetRaffleForm() {
   const form = document.getElementById('raffle-create-form');
   if (form) form.reset();
-  selectRaffleTemplate('modern');
+  clearBgUpload();
+  selectRaffleTemplate('classic');
   hideError('raffle-create-error');
 }
 window.resetRaffleForm = resetRaffleForm;
