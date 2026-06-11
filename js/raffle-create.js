@@ -53,13 +53,29 @@ function clearBgUpload() {
 }
 window.clearBgUpload = clearBgUpload;
 
-// ─── Upload image to Firebase Storage ─────────────────────────
-async function uploadTicketBg(raffleId, file) {
-  if (!storage) throw new Error('Firebase Storage not initialized');
-  const ext = file.name.split('.').pop().toLowerCase();
-  const ref = storage.ref(`raffle-tickets/${raffleId}/bg.${ext}`);
-  const snap = await ref.put(file, { contentType: file.type });
-  return snap.ref.getDownloadURL();
+// ─── Compress + convert image to base64 (no Storage needed) ──
+async function imageFileToBase64(file, maxPx, quality) {
+  return new Promise((resolve, reject) => {
+    const img = new Image();
+    const url = URL.createObjectURL(file);
+    img.onload = () => {
+      URL.revokeObjectURL(url);
+      // Scale down if bigger than maxPx
+      let w = img.naturalWidth;
+      let h = img.naturalHeight;
+      const limit = maxPx || 900;
+      if (w > limit || h > limit) {
+        if (w > h) { h = Math.round(h * limit / w); w = limit; }
+        else        { w = Math.round(w * limit / h); h = limit; }
+      }
+      const canvas = document.createElement('canvas');
+      canvas.width = w; canvas.height = h;
+      canvas.getContext('2d').drawImage(img, 0, 0, w, h);
+      resolve(canvas.toDataURL('image/jpeg', quality || 0.65));
+    };
+    img.onerror = reject;
+    img.src = url;
+  });
 }
 
 // ─── Create Raffle ────────────────────────────────────────────
@@ -96,11 +112,21 @@ async function handleCreateRaffle(e) {
     const raffleId   = generateId(8);
     const adminToken = generateId(16);
 
-    // Upload custom bg if needed
+    // Compress + encode custom bg as base64 (stored in Firestore)
     let customBgUrl = null;
     if (selectedRaffleTemplate === 'custom' && uploadedBgFile) {
-      btnLoad.textContent = 'Uploading image…';
-      customBgUrl = await uploadTicketBg(raffleId, uploadedBgFile);
+      btnLoad.textContent = 'Processing image…';
+      try {
+        customBgUrl = await imageFileToBase64(uploadedBgFile, 900, 0.65);
+        // Firestore doc limit is 1MB; warn if still large
+        if (customBgUrl.length > 900000) {
+          customBgUrl = await imageFileToBase64(uploadedBgFile, 600, 0.5);
+        }
+      } catch (imgErr) {
+        showError('raffle-create-error', 'Failed to process image: ' + imgErr.message);
+        btn.disabled = false; btnText.style.display = 'inline'; btnLoad.style.display = 'none';
+        return;
+      }
       btnLoad.textContent = 'Creating…';
     }
 
